@@ -19,7 +19,8 @@ def get_db(db_name):
     :param db_name: the db's name
     :return:
     """
-    client = MongoClient(host='192.168.1.205', port=27017, username='tqhy', password='tqhy817')
+    # client = MongoClient(host='192.168.1.205', port=27017, username='tqhy', password='tqhy817')
+    client = MongoClient('mongodb://tqhy:tqhy817@192.168.1.205:27017/?authSource=admin')
     return client.get_database(db_name)  # same with: client[db_name]
 
 
@@ -79,6 +80,7 @@ def find_by_classification(db_name, clc_name, limit=300, **kwargs):
                 subClass
     :return:
     """
+    print('start search clf {}'.format(kwargs))
     db = get_db(db_name)
     clc = db.get_collection(clc_name)
 
@@ -95,12 +97,11 @@ def find_by_classification(db_name, clc_name, limit=300, **kwargs):
         query_filter['subClass'] = kwargs['subClass']
 
     cursor = clc.find(query_filter).limit(limit)
+    print('search clf {} complete'.format(kwargs))
+    return list(cursor)
 
-    for doc in cursor:
-        print(doc)
 
-
-def count_by_classification(db_name, clc_name, **kwargs):
+def count_by_classification(db_name: str, clc_name: str, **kwargs):
     """
     get doc count of specified classification
     :param db_name:
@@ -111,7 +112,7 @@ def count_by_classification(db_name, clc_name, **kwargs):
                 subClass
     :return: int, if query section is null, return 0
     """
-    print('query param is {}'.format(kwargs))
+    print('start count clf {}'.format(kwargs))
     db = get_db(db_name)
     clc = db.get_collection(clc_name)
 
@@ -137,7 +138,11 @@ if __name__ == '__main__':
     clc_raw = 'raw'
     # remove_redundant('ip_doc', 'raw')
     start_time = time.time()
-    # find_by_classification(db_ip_doc, clc_raw, 300, section='C', mainClass='08', subClass='B')
-    count_by_classification(db_ip_doc, clc_raw, section='C', mainClass='08', subClass='B')
+    docs = find_by_classification(db_ip_doc, clc_raw, section='A', mainClass='01', subClass='B')
+    count = len(docs)
+    for doc in docs:
+        print('find doc pubId {}'.format(doc['pubId']))
+    print('count is {}'.format(count))
+
     end_time = time.time()
     print('complete...,take time {}s'.format(end_time - start_time))
