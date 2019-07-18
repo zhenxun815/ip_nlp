@@ -9,12 +9,19 @@
 # @Time: 7/18/2019 10:49
 
 from pymongo import MongoClient
+from mongo.configs import MongoConfigs
 
 
 class Connect:
     @staticmethod
     def get_connection():
-        return MongoClient('mongodb://tqhy:tqhy817@192.168.1.205:27017/?authSource=admin')
+        username = MongoConfigs.username
+        password = MongoConfigs.password
+        host = MongoConfigs.db_host
+        port = MongoConfigs.db_port
+        auth_source = MongoConfigs.auth_source
+        uri = 'mongodb://%s:%s@%s:%d/?authSource=%s' % (username, password, host, port, auth_source)
+        return MongoClient(uri)
 
 
 def get_db(db_name):
