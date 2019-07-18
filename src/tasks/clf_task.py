@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# @Description: 
+from os import path
+
+# @Description:
 # @File: clf_task.py
 # @Project: ip_nlp
 # @Author: Yiheng
 # @Email: GuoYiheng89@gmail.com
 # @Time: 7/18/2019 10:02
 import mongo.doc_service as db_service
-
-from os import path
 from models.classification import Classification
 from mongo.utils import json_encoder
 from utils.classification_utils import gen_from_clf_str
@@ -64,11 +64,11 @@ def write_clfs(clfs_info_file_path, store_dir_path, limit=300):
     store_dir = store_dir_path
     for clf in classifications:
         print('classification str is: {}'.format(clf))
-        clf_docs = db_service.find_by_clf('ip_doc', 'raw', limit, section=clf.section,
-                                          mainClass=clf.main_class,
-                                          subClass=clf.sub_class)
+        clf_docs = db_service.find_cursor_by_clf('ip_doc', 'raw', limit, section=clf.section,
+                                                 mainClass=clf.main_class,
+                                                 subClass=clf.sub_class)
 
-        write_clf_docs(store_dir, clf, clf_docs)
+        write_clf_docs(store_dir, clf, list(clf_docs))
 
 
 if __name__ == '__main__':
