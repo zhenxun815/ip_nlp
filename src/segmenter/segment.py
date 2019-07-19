@@ -1,15 +1,55 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# @Description: 
+import re
+# @Description:
 # @File: segment.py
 # @Project: ip_nlp
 # @Author: Yiheng
 # @Email: GuoYiheng89@gmail.com
 # @Time: 7/17/2019 10:58
-
+from string import punctuation
 
 import jieba
+
+from mongo import doc_service
+
+# match decimal or single character
+pattern = re.compile(r'^[0-9]+(\.[0-9]+)?[a-zA-Z]*$|^[a-zA-Z]$')
+# chinese punctuations
+cn_punctuation = '，。、【】“”：；～（）《》‘’？！①②③④⑤⑥⑦⑧⑨⑩()、％…·℃—￥'
+# combine english and chinese punctuations
+all_punctuation = punctuation + cn_punctuation
+
+
+def is_digit(words: str):
+    matcher = pattern.match(words)
+    return matcher is not None
+
+
+def should_remove(token: str):
+    return token in all_punctuation or is_digit(token)
+
+
+def seg_raw_docs(raw_docs: list):
+    return [seg_raw_doc(raw_doc) for raw_doc in raw_docs]
+
+
+def seg_raw_doc(raw_doc):
+    segmented_title = seg_text(raw_doc['title'])
+    segmented_abs = seg_text(raw_doc['abs'])
+    segmented_claim = seg_text(raw_doc['claim'])
+    segmented_doc = {'pubId': raw_doc['pubId'],
+                     'title': segmented_title,
+                     'abs':   segmented_abs,
+                     'claim': segmented_claim}
+    return segmented_doc
+
+
+def seg_text(text: str):
+    raw_tokens = jieba.cut(text, cut_all=False)
+    processed_tokens = [t for t in raw_tokens if not should_remove(t)]
+    return ' '.join(processed_tokens)
 
 
 def test_jieba():
@@ -21,7 +61,11 @@ def test_jieba():
     print('cut for search result: ', ', '.join(seg_list_search))
 
 
-
-
 if __name__ == '__main__':
-    test_jieba()
+    raw_docs = doc_service.find_some('ip_doc', 'raw', 3)
+    seged_docs = seg_raw_docs(raw_docs)
+    for doc in seged_docs:
+        print(doc['pubId'])
+        print(doc['title'])
+        print(doc['abs'])
+        print(doc['claim'])
