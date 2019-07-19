@@ -10,6 +10,7 @@
 import time
 
 from pymongo import ASCENDING
+
 from mongo.connect import get_collection
 
 
@@ -54,6 +55,33 @@ def remove_redundant(db_name, clc_name):
             if i == len(obj_ids) - 1:
                 break
             clc.remove(obj_ids[i])
+
+
+def find_some(db_name: str, clc_name: str, limit: int):
+    """
+    find specified count of docs return a generator, whose item is a Bson obj
+    :param db_name:
+    :param clc_name:
+    :param limit:
+    :return:
+    """
+    print('start mongo service: find_some')
+    clc = get_collection(db_name, clc_name)
+    limit = 0 if limit < 0 else limit
+    cursor = clc.find({}).limit(limit)
+    while cursor.alive:
+        yield cursor.next()
+
+
+def find_all(db_name: str, clc_name: str):
+    """
+    find all docs and return a generator, whose item is a Bson obj
+    :param db_name:
+    :param clc_name:
+    :return:
+    """
+    print('start mongo service: find_all')
+    return find_some(db_name, clc_name, 0)
 
 
 def find_by_clf(db_name, clc_name, limit=300, **kwargs):
@@ -107,7 +135,7 @@ if __name__ == '__main__':
     clc_raw = 'raw'
     # remove_redundant('ip_doc', 'raw')
     start_time = time.time()
-    docs = find_by_clf(db_ip_doc, clc_raw, section='c', mainClass='08', subClass='b')
+    docs = find_some(db_ip_doc, clc_raw, 3)
     # count = len(list(docs))
     # print('count is {}'.format(count))
     for doc in docs:
