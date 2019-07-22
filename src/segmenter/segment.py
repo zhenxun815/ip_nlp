@@ -14,6 +14,9 @@ import jieba
 
 from mongo import doc_service
 
+# jieba.load_userdict('../../resources/cnki_dict.txt')
+
+
 # match decimal or single character
 pattern = re.compile(r'^[0-9]+(\.[0-9]+)?[a-zA-Z]*$|^[a-zA-Z]$')
 # chinese punctuations
@@ -53,15 +56,15 @@ def seg_text(text: str):
 
 
 def test_jieba():
-    seg_list_all = jieba.cut("小明硕士毕业于中国科学院计算所，后在日本京都大学深造", cut_all=True)  # 全模式
-    seg_list_accuracy = jieba.cut("小明硕士毕业于中国科学院计算所，后在日本京都大学深造", cut_all=False)  # 精确模式
-    seg_list_search = jieba.cut_for_search("小明硕士毕业于中国科学院计算所，后在日本京都大学深造")  # 搜索引擎模式
+    seg_list_all = jieba.cut("小明硕士毕业于中国科学院计算所，后在日本京都大学深造云计算", cut_all=True)  # 全模式
+    seg_list_accuracy = jieba.cut("小明硕士毕业于中国科学院计算所，后在日本京都大学深造云计算", cut_all=False)  # 精确模式
+    seg_list_search = jieba.cut_for_search("小明硕士毕业于中国科学院计算所，后在日本京都大学深造云计算")  # 搜索引擎模式
     print('cut all result: ', ', '.join(seg_list_all))
     print('cut accuracy result', ', '.join(seg_list_accuracy))
     print('cut for search result: ', ', '.join(seg_list_search))
 
 
-if __name__ == '__main__':
+def do_work():
     raw_docs = doc_service.find_some('ip_doc', 'raw', 3)
     seged_docs = seg_raw_docs(raw_docs)
     for doc in seged_docs:
@@ -69,3 +72,7 @@ if __name__ == '__main__':
         print(doc['title'])
         print(doc['abs'])
         print(doc['claim'])
+
+
+if __name__ == '__main__':
+    test_jieba()
