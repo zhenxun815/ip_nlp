@@ -9,7 +9,7 @@
 # @Time: 7/22/2019 9:28
 
 
-def list2file(list2write: list, dest_file: str):
+def list2file(list2write, dest_file: str):
     """
     write list elements to file line by line
     :param list2write:
@@ -18,4 +18,6 @@ def list2file(list2write: list, dest_file: str):
     """
     with open(dest_file, 'a', encoding='utf-8') as f:
         for item in list2write:
+            print('item to write {}'.format(item))
             f.write(str(item) + '\n')
+            # f.flush()
