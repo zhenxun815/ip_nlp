@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# @Description: 
+# @Description:
 # @File: classification_utils.py
 # @Project: ip_nlp
 # @Author: Yiheng
 # @Email: GuoYiheng89@gmail.com
 # @Time: 7/17/2019 12:12
 import re
+
 from models.classification import Classification
 
 # classification regex
@@ -29,6 +30,15 @@ def gen_from_clf_str(clf_str: str) -> Classification:
         return Classification(section, main_class, sub_class)
     print('{} not match classification string pattern'.format(clf_str))
     return None
+
+
+def is_clf_str(str2judge):
+    """
+    judge whether a string match clf pattern
+    :param str2judge:
+    :return:
+    """
+    return _pattern.match(str2judge) is not None
 
 
 if __name__ == '__main__':
