@@ -19,4 +19,4 @@ class Classification:
         self.sub_class = sub_class
 
     def __str__(self) -> str:
-        return '%s_%s_%s' % (self.section, self.main_class, self.sub_class)
+        return '%s%s%s' % (self.section, self.main_class, self.sub_class)
