@@ -34,7 +34,7 @@ if __name__ == '__main__':
     seg_tup = seg_docs_under_dir(raw_dir_path, regx)
 
     for file_name, doc in seg_tup:
-        print('file is {},seged doc is {}'.format(file_name, doc))
+        print('file is {},seged doc is {}'.format(file_name, doc['pubId']))
         seged_file = path.join(seged_dir_path, file_name)
         with open(seged_file, 'a', encoding='utf-8') as f:
             f.write(json.dumps(doc, ensure_ascii=False) + '\n')
