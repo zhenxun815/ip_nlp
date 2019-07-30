@@ -83,5 +83,5 @@ if __name__ == '__main__':
     dict_cnki_path = 'F:/temp/ip_nlp/cnki_dict.txt'
     for word in words:
         # print(word)
-        file_utils.list2file(word, dict_cnki_path)
+        file_utils.save_list2file(word, dict_cnki_path)
     print('all task complete...')

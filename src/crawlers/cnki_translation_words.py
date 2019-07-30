@@ -77,8 +77,8 @@ def test():
 
 if __name__ == '__main__':
     words = grab_words(max_page_num)
-    file_utils.list2file(words, 'F:/temp/ip_nlp/cnki_trans.txt')
+    file_utils.save_list2file(words, 'F:/temp/ip_nlp/cnki_trans.txt')
 
     if len(fail_pages) > 0:
         supply_words = grab_failed_page()
-        file_utils.list2file(words, 'F:/temp/ip_nlp/cnki_trans.txt')
+        file_utils.save_list2file(words, 'F:/temp/ip_nlp/cnki_trans.txt')
