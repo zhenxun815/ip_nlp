@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import os
 import time
+from datetime import datetime
 from datetime import timedelta
 
 import numpy as np
@@ -24,6 +25,7 @@ save_dir = os.path.join(base_dir, 'checkpoints/textcnn')
 save_path = os.path.join(save_dir, 'best_validation')  # 最佳验证结果保存路径
 
 seged_clf_path = '../../resources/clfs/seged'
+tensorboard_dir = os.path.join(base_dir, 'tensorboard/textcnn')
 
 
 def get_time_dif(start_time):
@@ -61,7 +63,7 @@ def evaluate(sess, x_, y_):
 def train():
     print("Configuring TensorBoard and Saver...")
     # 配置 Tensorboard，重新训练时，请将tensorboard文件夹删除，不然图会覆盖
-    tensorboard_dir = 'tensorboard/textcnn'
+
     if not os.path.exists(tensorboard_dir):
         os.makedirs(tensorboard_dir)
 
@@ -183,12 +185,28 @@ def test():
     print("Time usage:", time_dif)
 
 
+def print_config_params(config):
+    print('train time: {}'.format(datetime.now()))
+    print('config params :')
+    print('embedding_dim: {}'.format(config.embedding_dim))
+    print('seq_length: {}'.format(config.seq_length))
+    print('num_classes: {}'.format(config.num_classes))
+    print('num_filters: {}'.format(config.num_filters))
+    print('kernel_size: {}'.format(config.kernel_size))
+    print('kernel_size: {}'.format(config.kernel_size))
+    print('vocab_size: {}'.format(config.vocab_size))
+    print('batch_size: {}'.format(config.batch_size))
+    print('dropout_keep_prob: {}'.format(config.dropout_keep_prob))
+    print('########################################################')
+
+
 if __name__ == '__main__':
     # if len(sys.argv) != 2 or sys.argv[1] not in ['train', 'test']:
     # raise ValueError("""usage: python run_cnn.py [train / test]""")
 
     print('Configuring CNN model...')
     config = TCNNConfig()
+    print_config_params(config)
     if not os.path.exists(vocab_dir):  # 如果不存在词汇表，重建
         build_vocab(train_dir, vocab_dir, config.vocab_size)
     categories, cat_to_id = read_category(seged_clf_path)
