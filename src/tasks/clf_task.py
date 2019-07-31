@@ -12,7 +12,7 @@ from os import path
 import mongo.doc_service as db_service
 from models.classification import Classification
 from mongo.utils import json_encoder
-from utils.classification_utils import gen_from_clf_str
+from utils.clf_utils import gen_from_clf_str
 
 
 def get_clf_str_from_file(clf_names_file_path: str):
@@ -78,8 +78,8 @@ def write_clfs(clfs_info_file_path, store_dir_path, limit=300, write_less=True):
 
 
 if __name__ == '__main__':
-    clf_names_file = '../../resources/classifications.txt'
-    store_dir = '../../resources/clfs/'
+    clf_names_file = '../../resources/clf_names.txt'
+    store_dir = '../../resources/clfs/raw'
     written_clf_names_file = '../../resources/clfs_gt_5000.txt'
     clfs = write_clfs(clf_names_file, store_dir, limit=5000, write_less=False)
     with open(written_clf_names_file, 'w', encoding='utf-8') as f:
