@@ -12,8 +12,8 @@ import numpy as np
 import tensorflow as tf
 from sklearn import metrics
 
-from train.cnews_loader import read_vocab, read_category, batch_iter, process_file, build_vocab
 from train.cnn_model import TCNNConfig, TextCNN
+from train.data_loader import read_vocab, read_category, batch_iter, process_file, build_vocab
 
 base_dir = '../../resources/clfs/train'
 train_dir = os.path.join(base_dir, 'train.txt')

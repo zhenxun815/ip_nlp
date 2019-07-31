@@ -85,9 +85,6 @@ def read_vocab(vocab_dir):
     return words, word_to_id
 
 
-sections = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-
-
 def read_category(seged_dir_path):
     """读取分类目录，固定"""
     # categories = []
