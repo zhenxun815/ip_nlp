@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # @Description:
-# @File: classification_utils.py
+# @File: clf_utils.py
 # @Project: ip_nlp
 # @Author: Yiheng
 # @Email: GuoYiheng89@gmail.com
