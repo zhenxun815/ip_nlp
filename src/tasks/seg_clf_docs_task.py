@@ -18,7 +18,7 @@ from utils import file_utils
 def seg_docs_under_dir(dir_path, file_name_regx):
     files2reg = file_utils.get_files(dir_path, file_name_regx)
     print(files2reg)
-    stop_words = segment.load_stop_words('../../resources/stps/stopWord.txt')
+    stop_words = segment.load_stop_words('../../resources/stps/stop_words.stp')
     for file in files2reg:
         with open(file) as f:
             for line in f:
@@ -29,11 +29,10 @@ def seg_docs_under_dir(dir_path, file_name_regx):
 
 if __name__ == '__main__':
     regx = r'[A-Z][0-9]{2}[A-Z]_5000.txt'
-    raw_dir_path = '../../resources/clfs/raw'
-    seged_dir_path = '../../resources/clfs/seged'
-    seg_tup = seg_docs_under_dir(raw_dir_path, regx)
+    raw_dir_path = 'E:/ip_data/raw'
+    seged_dir_path = 'E:/ip_data/seged'
 
-    for file_name, doc in seg_tup:
+    for file_name, doc in seg_docs_under_dir(raw_dir_path, regx):
         print('file is {},seged doc is {}'.format(file_name, doc['pubId']))
         seged_file = path.join(seged_dir_path, file_name)
         with open(seged_file, 'a', encoding='utf-8') as f:
