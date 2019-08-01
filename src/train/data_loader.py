@@ -1,86 +1,48 @@
 # coding: utf-8
 
 import os
-import sys
 from collections import Counter
-from importlib import reload
 
 import numpy as np
 import tensorflow.keras as kr
 
-if sys.version_info[0] > 2:
-    is_py3 = True
-else:
-    reload(sys)
-    sys.setdefaultencoding("utf-8")
-    is_py3 = False
-
-
-def native_word(word, encoding='utf-8'):
-    """如果在python2下面使用python3训练的模型，可考虑调用此函数转化一下字符编码"""
-    if not is_py3:
-        return word.encode(encoding)
-    else:
-        return word
-
-
-def native_content(content):
-    if not is_py3:
-        return content.decode('utf-8')
-    else:
-        return content
-
-
-def open_file(filename, mode='r'):
-    """
-    常用文件操作，可在python2和python3间切换.
-    mode: 'r' or 'w' for read or write
-    """
-    if is_py3:
-        return open(filename, mode, encoding='utf-8', errors='ignore')
-    else:
-        return open(filename, mode)
+from utils import file_utils
 
 
 def read_file(filename):
     """读取文件数据"""
     contents, labels = [], []
-    with open_file(filename) as f:
+    with open(filename, encoding='utf-8') as f:
         for line in f:
             try:
-                label, content = line.strip().split('\t')
+                label, content = line.split('\t')
                 if content:
-                    contents.append(list(native_content(content)))
+                    contents.extend(content.split())
                     section_label = label[0:4]
                     # print('section label is {}'.format(section_label))
-                    labels.append(native_content(section_label))
+                    labels.append(section_label)
             except:
                 pass
     return contents, labels
 
 
-def build_vocab(train_dir, vocab_dir, vocab_size=5000):
+def build_vocab(train_txt_path, vocab_txt_path, vocab_size=5000):
     """根据训练集构建词汇表，存储"""
-    data_train, _ = read_file(train_dir)
+    data2train, _ = read_file(train_txt_path)
 
-    all_data = []
-    for content in data_train:
-        all_data.extend(content)
-
-    counter = Counter(all_data)
+    counter = Counter(data2train)
     count_pairs = counter.most_common(vocab_size - 1)
     words, _ = list(zip(*count_pairs))
     # 添加一个 <PAD> 来将所有文本pad为同一长度
     words = ['<PAD>'] + list(words)
-    open_file(vocab_dir, mode='w').write('\n'.join(words) + '\n')
+    file_utils.save_list2file(words, vocab_txt_path)
 
 
 def read_vocab(vocab_dir):
     """读取词汇表"""
     # words = open_file(vocab_dir).read().strip().split('\n')
-    with open_file(vocab_dir) as fp:
-        # 如果是py2 则每个值都转化为unicode
-        words = [native_content(_.strip()) for _ in fp.readlines()]
+    with open(vocab_dir, encoding='utf-8') as fp:
+        words = [_.strip() for _ in fp.readlines()]
     word_to_id = dict(zip(words, range(len(words))))
     return words, word_to_id
 
@@ -89,7 +51,7 @@ def read_category(seged_dir_path):
     """读取分类目录，固定"""
     # categories = []
 
-    categories = [native_content(x[0:4]) for x in os.listdir(seged_dir_path)]
+    categories = [x[0:4] for x in os.listdir(seged_dir_path)]
     for cat in categories:
         print('cat is {}'.format(cat))
     cat_to_id = dict(zip(categories, range(len(categories))))
@@ -134,4 +96,8 @@ def batch_iter(x, y, batch_size=64):
 
 
 if __name__ == '__main__':
-    read_category('../../resources/clfs/seged')
+    base_dir = 'E:/ip_data'
+    train_dir = os.path.join(base_dir, 'train')
+    train_txt = os.path.join(train_dir, 'train.txt')
+    vocab_txt = os.path.join(train_dir, 'vocab.txt')
+    build_vocab(train_txt, vocab_txt, 400000)
