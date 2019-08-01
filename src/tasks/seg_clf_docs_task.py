@@ -15,10 +15,10 @@ from segmenter import segment
 from utils import file_utils
 
 
-def seg_docs_under_dir(dir_path, file_name_regx):
+def seg_docs_under_dir(dir_path, file_name_regx, stop_words_path):
     files2reg = file_utils.get_files(dir_path, file_name_regx)
     print(files2reg)
-    stop_words = segment.load_stop_words('../../resources/stps/stop_words.stp')
+    stop_words = segment.load_stop_words(stop_words_path)
     for file in files2reg:
         with open(file) as f:
             for line in f:
@@ -29,10 +29,11 @@ def seg_docs_under_dir(dir_path, file_name_regx):
 
 if __name__ == '__main__':
     regx = r'[A-Z][0-9]{2}[A-Z]_5000.txt'
-    raw_dir_path = 'E:/ip_data/raw'
+    raw_dir_path = 'E:/ip_data/tmp'
     seged_dir_path = 'E:/ip_data/seged'
+    stop_words_path = '../../resources/stps/stop_words.stp'
 
-    for file_name, doc in seg_docs_under_dir(raw_dir_path, regx):
+    for file_name, doc in seg_docs_under_dir(raw_dir_path, regx, stop_words_path):
         print('file is {},seged doc is {}'.format(file_name, doc['pubId']))
         seged_file = path.join(seged_dir_path, file_name)
         with open(seged_file, 'a', encoding='utf-8') as f:
