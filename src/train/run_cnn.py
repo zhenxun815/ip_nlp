@@ -15,16 +15,17 @@ from sklearn import metrics
 from train.cnn_model import TCNNConfig, TextCNN
 from train.data_loader import read_vocab, read_category, batch_iter, process_file, build_vocab
 
-base_dir = '../../resources/clfs/train'
-train_dir = os.path.join(base_dir, 'train.txt')
-test_dir = os.path.join(base_dir, 'test.txt')
-val_dir = os.path.join(base_dir, 'val.txt')
-vocab_dir = os.path.join(base_dir, 'vocab.txt')
+base_dir = 'E:/ip_data'
+train_dir = os.path.join(base_dir, 'train')
+train_txt = os.path.join(train_dir, 'train.txt')
+test_txt = os.path.join(train_dir, 'test.txt')
+val_txt = os.path.join(train_dir, 'val.txt')
+vocab_txt = os.path.join(train_dir, 'vocab.txt')
 
-save_dir = os.path.join(base_dir, 'checkpoints/textcnn')
+save_dir = os.path.join(train_dir, 'checkpoints/textcnn')
 save_path = os.path.join(save_dir, 'best_validation')  # 最佳验证结果保存路径
 
-seged_clf_path = '../../resources/clfs/seged'
+seged_clf_path = os.path.join(base_dir, 'seged')
 tensorboard_dir = os.path.join(base_dir, 'tensorboard/textcnn')
 
 logs_dir = os.path.join(base_dir, 'logs')
@@ -82,8 +83,8 @@ def train():
     print("Loading training and validation data...", file=log_file)
     # 载入训练集与验证集
     start_time = time.time()
-    x_train, y_train = process_file(train_dir, word_to_id, cat_to_id, config.seq_length)
-    x_val, y_val = process_file(val_dir, word_to_id, cat_to_id, config.seq_length)
+    x_train, y_train = process_file(train_txt, word_to_id, cat_to_id, config.seq_length)
+    x_val, y_val = process_file(val_txt, word_to_id, cat_to_id, config.seq_length)
     time_dif = get_time_dif(start_time)
     print("Time usage:", time_dif, file=log_file)
 
@@ -148,7 +149,7 @@ def train():
 def test():
     print("Loading test data...")
     start_time = time.time()
-    x_test, y_test = process_file(test_dir, word_to_id, cat_to_id, config.seq_length)
+    x_test, y_test = process_file(test_txt, word_to_id, cat_to_id, config.seq_length)
 
     session = tf.Session()
     session.run(tf.global_variables_initializer())
@@ -213,10 +214,10 @@ if __name__ == '__main__':
     print('Configuring CNN model...')
     config = TCNNConfig()
     print_config_params(config)
-    if not os.path.exists(vocab_dir):  # 如果不存在词汇表，重建
-        build_vocab(train_dir, vocab_dir, config.vocab_size)
+    if not os.path.exists(vocab_txt):  # 如果不存在词汇表，重建
+        build_vocab(train_txt, vocab_txt, config.vocab_size)
     categories, cat_to_id = read_category(seged_clf_path)
-    words, word_to_id = read_vocab(vocab_dir)
+    words, word_to_id = read_vocab(vocab_txt)
     config.vocab_size = len(words)
     model = TextCNN(config)
     train()
