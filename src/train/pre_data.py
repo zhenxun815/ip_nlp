@@ -10,7 +10,6 @@
 
 import json
 import os
-import re
 from os import path
 
 from utils import clf_utils
@@ -25,29 +24,35 @@ def read_docs_file(file_path):
             abs_ = seged_doc['abs']
             title = seged_doc['title']
             content = abs_ if len(abs_) > len(title) else title
-            content = re.sub(r'实用新型 ', '', content)
-            content = re.sub(r'公开 ', '', content)
 
             yield cat_name, content.replace('\n', '').replace('\t', '')
 
 
-def save_group_file(segd_docs_dir):
+def save_group_file(base_dir):
     """
     将多个文件整合并存到3个文件中
     dirname: 原数据目录
     文件内容格式:  类别\t内容
     """
-    f_train = open('../../resources/clfs/train/train.txt', 'a', encoding='utf-8')
-    f_test = open('../../resources/clfs/train/test.txt', 'a', encoding='utf-8')
-    f_val = open('../../resources/clfs/train/val.txt', 'a', encoding='utf-8')
+    train_dir = os.path.join(base_dir, 'train')
+    train_txt = os.path.join(train_dir, 'train.txt')
+    test_txt = os.path.join(train_dir, 'test.txt')
+    val_txt = os.path.join(train_dir, 'val.txt')
+    f_train = open(train_txt, 'a', encoding='utf-8')
+    f_test = open(test_txt, 'a', encoding='utf-8')
+    f_val = open(val_txt, 'a', encoding='utf-8')
+
+    seged_dir = os.path.join(base_dir, 'seged')
+
     seq_size = 0
-    for f_name in os.listdir(segd_docs_dir):
+
+    for f_name in os.listdir(seged_dir):
         prefix_str = f_name.split('_')[0]
         print('prefix str is {}'.format(prefix_str))
         if not clf_utils.is_clf_str(prefix_str):
             continue
         count = 0
-        clf_docs_file = os.path.join(segd_docs_dir, f_name)
+        clf_docs_file = os.path.join(seged_dir, f_name)
         for cat_name, content in read_docs_file(clf_docs_file):
             tmp_seq_size = content.count(' ')
             seq_size = tmp_seq_size if tmp_seq_size > seq_size else seq_size
@@ -73,4 +78,4 @@ def save_group_file(segd_docs_dir):
 
 
 if __name__ == '__main__':
-    save_group_file('../../resources/clfs/seged')
+    save_group_file('E:/ip_data')
