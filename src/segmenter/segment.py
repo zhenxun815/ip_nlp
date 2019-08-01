@@ -84,12 +84,10 @@ def test_jieba():
 
 if __name__ == '__main__':
     text = '本发明H2O涉及S2园林机电Al1.0%技术领域\t实用新型 公开，具体的1000ppm说是一种盆\n栽土壤0.25%养护      ' \
-           '作业平台，包括机架、平连接，水管(53)另一端通过水泵H289%与水箱(51)相连接；所述)的气管0.01相连接。'
+           '作业平台，包括200B1机架、平连接，水管(53)另一端通过水泵H289%与水箱(51)相连接；所述)的气管0.01相连接。'
     seg_list_accuracy = jieba.cut(text, cut_all=False)
     print(' '.join(seg_list_accuracy))
 
     stop_words = load_stop_words('../../resources/stps/stop_words.stp')
     tokens = seg_text(text, stop_words)
     print(tokens)
-    chem_word = is_chemistry('Mn0.85%')
-    print('word is {}'.format(chem_word))
