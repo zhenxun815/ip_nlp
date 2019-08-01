@@ -16,7 +16,9 @@ import jieba.analyse
 jieba.load_userdict('../../resources/cnki_dict.txt')
 
 # match decimal or single character
-pattern = re.compile(r'^[0-9]+(\.[0-9]+)?[a-zA-Z%‰]*$|^[a-zA-Z]$')
+digit_pattern = re.compile(r'^[0-9]+(\.[0-9]+)?[a-zA-Z%‰]?')
+chemistry_pattern1 = re.compile(r'(?P<chemistry>[a-zA-Z]+)(?P<digit>[0-9]+)?\.[0-9]+[%‰]?')
+chemistry_pattern2 = re.compile(r'(?P<chemistry>[a-zA-Z]+)(?P<digit>[0-9]+[%‰])')
 
 
 # chinese punctuations
@@ -30,8 +32,17 @@ def load_stop_words(file_path):
 
 
 def is_digit(words: str):
-    matcher = pattern.match(words)
+    matcher = digit_pattern.match(words)
     return matcher is not None
+
+
+def is_chemistry(words: str):
+    print('str to judge is {}'.format(words))
+    matcher1 = chemistry_pattern1.match(words)
+    matcher2 = chemistry_pattern2.match(words)
+    matcher = matcher1 if matcher1 else matcher2
+
+    return matcher.group('chemistry') if matcher else words
 
 
 def seg_raw_docs(raw_docs: list):
@@ -58,7 +69,7 @@ def clear_str(string: str):
 
 def seg_text(text: str, stop_words: list):
     raw_words = jieba.cut(clear_str(text), cut_all=False)
-    tokens = [token for token in raw_words if token not in stop_words and not is_digit(token)]
+    tokens = [is_chemistry(token) for token in raw_words if token not in stop_words and not is_digit(token)]
     return ' '.join(tokens)
 
 
@@ -72,13 +83,13 @@ def test_jieba():
 
 
 if __name__ == '__main__':
-    text = '本发明H2O涉及园林机电技术领域\t实用新型 公开，具体的说是一种盆\n栽土壤0.25%养护      ' \
-           '作业平台，包括机架、平连接，水管(53)另一端通过水泵与水箱(51)相连接；所述)的气管相连接。'
+    text = '本发明H2O涉及S2园林机电Al1.0%技术领域\t实用新型 公开，具体的1000ppm说是一种盆\n栽土壤0.25%养护      ' \
+           '作业平台，包括机架、平连接，水管(53)另一端通过水泵H289%与水箱(51)相连接；所述)的气管0.01相连接。'
     seg_list_accuracy = jieba.cut(text, cut_all=False)
     print(' '.join(seg_list_accuracy))
-    stop_words = load_stop_words('../../resources/stps/stopWord.txt')
-    tokens = seg_text(text, stop_words)
-    print(tokens)
+
     stop_words = load_stop_words('../../resources/stps/stop_words.stp')
     tokens = seg_text(text, stop_words)
     print(tokens)
+    chem_word = is_chemistry('Mn0.85%')
+    print('word is {}'.format(chem_word))
