@@ -6,7 +6,10 @@ from collections import Counter
 import numpy as np
 import tensorflow.keras as kr
 
+from common import logger_factory
 from utils import file_utils
+
+logger = logger_factory.get_logger('data_loader')
 
 
 def read_file(filename):
@@ -17,7 +20,7 @@ def read_file(filename):
             try:
                 label, content = line.split('\t')
                 if content:
-                    contents.extend(content.split())
+                    contents.append(content.split())
                     section_label = label[0:4]
                     # print('section label is {}'.format(section_label))
                     labels.append(section_label)
@@ -28,9 +31,9 @@ def read_file(filename):
 
 def build_vocab(train_txt_path, vocab_txt_path, vocab_size=5000):
     """根据训练集构建词汇表，存储"""
-    data2train, _ = read_file(train_txt_path)
+    contents = file_utils.read_line(train_txt_path, lambda line_contents: line_contents[1], split='\t')
 
-    counter = Counter(data2train)
+    counter = Counter([word for content in contents for word in content.split()])
     count_pairs = counter.most_common(vocab_size - 1)
     words, _ = list(zip(*count_pairs))
     # 添加一个 <PAD> 来将所有文本pad为同一长度
@@ -66,12 +69,16 @@ def to_words(content, words):
 
 def process_file(filename, word_to_id, cat_to_id, max_length=600):
     """将文件转换为id表示"""
-    contents, labels = read_file(filename)
+    data2train = file_utils.read_line(filename,
+                                      lambda line_contents: (line_contents[0], line_contents[1].split()),
+                                      split='\t')
 
     data_id, label_id = [], []
-    for i in range(len(contents)):
-        data_id.append([word_to_id[x] for x in contents[i] if x in word_to_id])
-        label_id.append(cat_to_id[labels[i]])
+    for label, content in data2train:
+        for word in content:
+            if word in word_to_id:
+                data_id.append(word_to_id[word])
+                label_id.append(cat_to_id[label])
 
     # 使用keras提供的pad_sequences来将文本pad为固定长度
     x_pad = kr.preprocessing.sequence.pad_sequences(data_id, max_length)
