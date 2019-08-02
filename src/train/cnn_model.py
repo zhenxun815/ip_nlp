@@ -8,7 +8,7 @@ class TCNNConfig(object):
 
     embedding_dim = 128  # 词向量维度
     seq_length = 210  # 序列长度
-    num_classes = 3  # 类别数
+    num_classes = 244  # 类别数
     num_filters = 256  # 卷积核数目
     kernel_size = 3  # 卷积核尺寸
     vocab_size = 200000  # 词汇表达小
