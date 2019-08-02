@@ -12,23 +12,21 @@ import numpy as np
 import tensorflow as tf
 from sklearn import metrics
 
+from common import logger_factory
+from common import path_config
 from train.cnn_model import TCNNConfig, TextCNN
 from train.data_loader import read_vocab, read_category, batch_iter, process_file, build_vocab
 
-base_dir = 'E:/ip_data'
-train_dir = os.path.join(base_dir, 'train')
-train_txt = os.path.join(train_dir, 'train.txt')
-test_txt = os.path.join(train_dir, 'test.txt')
-val_txt = os.path.join(train_dir, 'val.txt')
-vocab_txt = os.path.join(train_dir, 'vocab.txt')
+base_dir = path_config.base_dir
+train_txt = path_config.train_txt
+test_txt = path_config.test_txt
+val_txt = path_config.val_txt
+vocab_txt = path_config.vocab_txt
 
-save_dir = os.path.join(train_dir, 'checkpoints/textcnn')
-save_path = os.path.join(save_dir, 'best_validation')  # 最佳验证结果保存路径
+save_path = path_config.save_path  # 最佳验证结果保存路径
 
-seged_clf_path = os.path.join(base_dir, 'seged')
-tensorboard_dir = os.path.join(base_dir, 'tensorboard/textcnn')
-
-logs_dir = os.path.join(base_dir, 'logs')
+seged_clf_path = path_config.seged_clf_path
+tensorboard_dir = path_config.tensorboard_dir
 
 
 def get_time_dif(start_time):
@@ -64,7 +62,7 @@ def evaluate(sess, x_, y_):
 
 
 def train():
-    print("Configuring TensorBoard and Saver...", file=log_file)
+    train_logger.info("Configuring TensorBoard and Saver...")
     # 配置 Tensorboard，重新训练时，请将tensorboard文件夹删除，不然图会覆盖
 
     if not os.path.exists(tensorboard_dir):
@@ -77,23 +75,21 @@ def train():
 
     # 配置 Saver
     saver = tf.train.Saver()
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
 
-    print("Loading training and validation data...", file=log_file)
+    train_logger.info("Loading training and validation data...")
     # 载入训练集与验证集
     start_time = time.time()
     x_train, y_train = process_file(train_txt, word_to_id, cat_to_id, config.seq_length)
     x_val, y_val = process_file(val_txt, word_to_id, cat_to_id, config.seq_length)
     time_dif = get_time_dif(start_time)
-    print("Time usage:", time_dif, file=log_file)
+    train_logger.info(f'Time usage:{time_dif}')
 
     # 创建session
     session = tf.Session()
     session.run(tf.global_variables_initializer())
     writer.add_graph(session.graph)
 
-    print('Training and evaluating...', file=log_file)
+    train_logger.info('Training and evaluating...')
     start_time = time.time()
     total_batch = 0  # 总批次
     best_acc_val = 0.0  # 最佳验证集准确率
@@ -102,7 +98,7 @@ def train():
 
     flag = False
     for epoch in range(config.num_epochs):
-        print('Epoch:', epoch + 1, file=log_file)
+        train_logger.info(f'Epoch:{epoch + 1}')
         batch_train = batch_iter(x_train, y_train, config.batch_size)
         for x_batch, y_batch in batch_train:
             feed_dict = feed_data(x_batch, y_batch, config.dropout_keep_prob)
@@ -130,8 +126,8 @@ def train():
                 time_dif = get_time_dif(start_time)
                 msg = 'Iter: {0:>6}, Train Loss: {1:>6.2}, Train Acc: {2:>7.2%},' \
                       + ' Val Loss: {3:>6.2}, Val Acc: {4:>7.2%}, Time: {5} {6}'
-                print(msg.format(total_batch, loss_train, acc_train, loss_val, acc_val, time_dif, improved_str),
-                      file=log_file, flush=True)
+                train_logger.info(
+                        msg.format(total_batch, loss_train, acc_train, loss_val, acc_val, time_dif, improved_str))
 
             feed_dict[model.keep_prob] = config.dropout_keep_prob
             session.run(model.optim, feed_dict=feed_dict)  # 运行优化
@@ -139,7 +135,7 @@ def train():
 
             if total_batch - last_improved > require_improvement:
                 # 验证集正确率长期不提升，提前结束训练
-                print("No optimization for a long time, auto-stopping...", file=log_file, flush=True)
+                train_logger.info("No optimization for a long time, auto-stopping...")
                 flag = True
                 break  # 跳出循环
         if flag:  # 同上
@@ -147,7 +143,7 @@ def train():
 
 
 def test():
-    print("Loading test data...")
+    train_logger.info("Loading test data...")
     start_time = time.time()
     x_test, y_test = process_file(test_txt, word_to_id, cat_to_id, config.seq_length)
 
@@ -156,10 +152,10 @@ def test():
     saver = tf.train.Saver()
     saver.restore(sess=session, save_path=save_path)  # 读取保存的模型
 
-    print('Testing...')
+    train_logger.info('Testing...')
     loss_test, acc_test = evaluate(session, x_test, y_test)
     msg = 'Test Loss: {0:>6.2}, Test Acc: {1:>7.2%}'
-    print(msg.format(loss_test, acc_test))
+    train_logger.info(msg.format(loss_test, acc_test))
 
     batch_size = 128
     data_len = len(x_test)
@@ -177,41 +173,40 @@ def test():
         y_pred_cls[start_id:end_id] = session.run(model.y_pred_cls, feed_dict=feed_dict)
 
     # 评估
-    print("Precision, Recall and F1-Score...")
-    print(metrics.classification_report(y_test_cls, y_pred_cls, target_names=categories))
+    train_logger.info("Precision, Recall and F1-Score...")
+    train_logger.info(metrics.classification_report(y_test_cls, y_pred_cls, target_names=categories))
 
     # 混淆矩阵
-    print("Confusion Matrix...")
+    train_logger.info("Confusion Matrix...")
     cm = metrics.confusion_matrix(y_test_cls, y_pred_cls)
-    print(cm)
+    train_logger.info(cm)
 
     time_dif = get_time_dif(start_time)
-    print("Time usage:", time_dif)
+    train_logger.info("Time usage:", time_dif)
 
 
 def print_config_params(config):
-    print('config params :')
-    print('embedding_dim: {}'.format(config.embedding_dim))
-    print('seq_length: {}'.format(config.seq_length))
-    print('num_classes: {}'.format(config.num_classes))
-    print('num_filters: {}'.format(config.num_filters))
-    print('kernel_size: {}'.format(config.kernel_size))
-    print('kernel_size: {}'.format(config.kernel_size))
-    print('vocab_size: {}'.format(config.vocab_size))
-    print('batch_size: {}'.format(config.batch_size))
-    print('dropout_keep_prob: {}'.format(config.dropout_keep_prob))
-    print('########################################################')
+    train_logger.info('config params :')
+    train_logger.info(f'embedding_dim: {config.embedding_dim}')
+    train_logger.info(f'seq_length: {config.seq_length}')
+    train_logger.info(f'num_classes: {config.num_classes}')
+    train_logger.info(f'num_filters: {config.num_filters}')
+    train_logger.info(f'kernel_size: {config.kernel_size}')
+    train_logger.info(f'kernel_size: {config.kernel_size}')
+    train_logger.info(f'vocab_size: {config.vocab_size}')
+    train_logger.info(f'batch_size: {config.batch_size}')
+    train_logger.info(f'dropout_keep_prob: {config.dropout_keep_prob}')
+    train_logger.info('########################################################')
 
 
 if __name__ == '__main__':
     # if len(sys.argv) != 2 or sys.argv[1] not in ['train', 'test']:
     # raise ValueError("""usage: python run_cnn.py [train / test]""")
-    log_file_name = time.strftime("%y_%m_%d_%H_%M.log", time.localtime())
-    log_file_path = os.path.join(logs_dir, log_file_name)
-    log_file = open(log_file_path, 'w', encoding='utf-8')
-    print('train time: {}'.format(datetime.now()), file=log_file)
 
-    print('Configuring CNN model...')
+    train_logger = logger_factory.get_logger('train', True)
+    train_logger.info('train time: {}'.format(datetime.now()))
+
+    train_logger.info('Configuring CNN model...')
     config = TCNNConfig()
     print_config_params(config)
     if not os.path.exists(vocab_txt):  # 如果不存在词汇表，重建
