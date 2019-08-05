@@ -51,7 +51,9 @@ def read_line(file2read, work, split=None):
     with open(file2read, encoding='utf-8') as f:
         for line in f:
             if split:
-                yield work(line.strip().split(split))
+                work_content = line.strip().split(split)
+                if len(work_content) > 1:
+                    yield work(work_content)
             else:
                 yield work(line.strip())
 
