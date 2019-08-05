@@ -24,8 +24,8 @@ def read_docs_file(file_path):
             abs_ = seged_doc['abs']
             title = seged_doc['title']
             content = abs_ if len(abs_) > len(title) else title
-
-            yield cat_name, content.replace('\n', '').replace('\t', '')
+            if len(content) > 0:
+                yield cat_name, content.replace('\n', '').replace('\t', '')
 
 
 def save_group_file(base_dir):
