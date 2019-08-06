@@ -11,7 +11,11 @@ import time
 
 from pymongo import ASCENDING
 
+from common import logger_factory
 from mongo.connect import get_collection
+from mongo.utils.query_filter_utils import get_clf_query_filter
+
+logger = logger_factory.get_logger('doc_service')
 
 
 def create_index(db_name, clc_name, field_name, sort=ASCENDING):
@@ -48,9 +52,9 @@ def remove_redundant(db_name, clc_name):
             }}], allowDiskUse=True)
     print('redundant_docs {}'.format(type(redundant_docs)))
     for doc in redundant_docs:
-        print(doc)
+        logger.info(f'{doc}')
         obj_ids = doc['uniqueIds']
-        print('obj ids is {}'.format(obj_ids))
+        logger.info(f'obj ids is {obj_ids}')
         for i in range(len(obj_ids)):
             if i == len(obj_ids) - 1:
                 break
@@ -65,7 +69,7 @@ def find_some(db_name: str, clc_name: str, limit: int):
     :param limit:
     :return:
     """
-    print('start mongo service: find_some')
+    logger.info(f'start find_some with limit {limit}')
     clc = get_collection(db_name, clc_name)
     limit = 0 if limit < 0 else limit
     cursor = clc.find({}).limit(limit)
@@ -80,7 +84,7 @@ def find_all(db_name: str, clc_name: str):
     :param clc_name:
     :return:
     """
-    print('start mongo service: find_all')
+    logger.info('start find_all')
     return find_some(db_name, clc_name, 0)
 
 
@@ -110,23 +114,13 @@ def find_cursor_by_clf(db_name, clc_name, limit, **kwargs):
                 subClass
     :return:
     """
-    print('start search tasks {}'.format(kwargs))
+    logger.info(f'start search tasks with {kwargs}')
     clc = get_collection(db_name, clc_name)
 
-    query_filter = {}
-    if 'section' in kwargs:
-        query_filter['section'] = str(kwargs['section']).upper()
-    else:
-        print('section must not be null')
-        return {}
-
-    if 'mainClass' in kwargs:
-        query_filter['mainClass'] = str(kwargs['mainClass']).upper()
-    if 'subClass' in kwargs:
-        query_filter['subClass'] = str(kwargs['subClass']).upper()
+    query_filter = get_clf_query_filter(kwargs)
 
     cursor = clc.find(query_filter).limit(limit)
-    print('search tasks {} complete'.format(kwargs))
+    logger.info(f'search tasks {kwargs} complete')
     return cursor
 
 
@@ -139,7 +133,7 @@ if __name__ == '__main__':
     # count = len(list(docs))
     # print('count is {}'.format(count))
     for doc in docs:
-        print('find doc pubId {}'.format(doc['pubId']))
+        logger.info(f'find doc pubId {doc["pubId"]}')
 
     end_time = time.time()
-    print('complete...,take time {}s'.format(end_time - start_time))
+    logger.info(f'complete...,take time {end_time - start_time}s')

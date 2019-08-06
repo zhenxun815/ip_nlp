@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# @Description: 
+from common import logger_factory
+# @Description:
 # @File: clf_service.py
 # @Project: ip_nlp
 # @Author: Yiheng
 # @Email: GuoYiheng89@gmail.com
 # @Time: 7/18/2019 12:01
 from mongo.connect import get_collection
+from mongo.utils.query_filter_utils import get_clf_query_filter
+
+logger = logger_factory.get_logger('clf_service')
 
 
 def count_docs(db_name: str, clc_name: str, **kwargs):
@@ -21,23 +25,12 @@ def count_docs(db_name: str, clc_name: str, **kwargs):
                 subClass
     :return: int, if query section is null, return 0
     """
-    print('start count tasks {}'.format(kwargs))
+    logger.info(f'start count tasks {kwargs}')
     clc = get_collection(db_name, clc_name)
 
-    query_filter = {}
-    if 'section' in kwargs:
-        query_filter['section'] = str(kwargs['section']).upper()
-    else:
-        print('section must not be null')
-        return {}
-
-    if 'mainClass' in kwargs:
-        query_filter['mainClass'] = str(kwargs['mainClass']).upper()
-    if 'subClass' in kwargs:
-        query_filter['subClass'] = str(kwargs['subClass']).upper()
-
+    query_filter = get_clf_query_filter(kwargs)
     count = clc.count_documents(query_filter)
-    print('count is {}'.format(count))
+    logger.info(f'count is {count}')
     return count
 
 
