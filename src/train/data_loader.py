@@ -12,23 +12,6 @@ from utils import file_utils
 logger = logger_factory.get_logger('data_loader')
 
 
-def read_file(filename):
-    """读取文件数据"""
-    contents, labels = [], []
-    with open(filename, encoding='utf-8') as f:
-        for line in f:
-            try:
-                label, content = line.split('\t')
-                if content:
-                    contents.append(content.split())
-                    section_label = label[0:4]
-                    # print('section label is {}'.format(section_label))
-                    labels.append(section_label)
-            except:
-                pass
-    return contents, labels
-
-
 def build_vocab(train_txt_path, vocab_txt_path, vocab_size=5000):
     """根据训练集构建词汇表，存储"""
     contents = file_utils.read_line(train_txt_path, lambda line_contents: line_contents[1], split='\t')
@@ -52,11 +35,7 @@ def read_vocab(vocab_dir):
 
 def read_category(seged_dir_path):
     """读取分类目录，固定"""
-    # categories = []
-
     categories = [x[0:4] for x in os.listdir(seged_dir_path)]
-    for cat in categories:
-        print('cat is {}'.format(cat))
     cat_to_id = dict(zip(categories, range(len(categories))))
 
     return categories, cat_to_id
@@ -75,10 +54,8 @@ def process_file(filename, word_to_id, cat_to_id, max_length=600):
 
     data_id, label_id = [], []
     for label, content in data2train:
-        for word in content:
-            if word in word_to_id:
-                data_id.append(word_to_id[word])
-                label_id.append(cat_to_id[label])
+        data_id.append([word_to_id[word] for word in content if word in word_to_id])
+        label_id.append(cat_to_id[label])
 
     # 使用keras提供的pad_sequences来将文本pad为固定长度
     x_pad = kr.preprocessing.sequence.pad_sequences(data_id, max_length)
