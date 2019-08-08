@@ -17,7 +17,7 @@ from common import path_config
 
 FORMATTER = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(funcName)s:%(message)s')
 
-TRAIN_LOG_FILE_NAME = time.strftime("%y_%m_%d_%H_%M.log", time.localtime())
+TRAIN_LOG_FILE_NAME = time.strftime('train_%y_%m_%d_%H_%M.log', time.localtime())
 DEFAULT_LOG_FILE_NAME = 'ip_nlp.log'
 
 
@@ -30,7 +30,7 @@ def get_console_handler():
 def get_file_handler(train_log=False):
     log_file_name = TRAIN_LOG_FILE_NAME if train_log else DEFAULT_LOG_FILE_NAME
     log_file = path.join(path_config.logs_dir, log_file_name)
-    file_handler = TimedRotatingFileHandler(log_file, when='D', encoding='utf-8')
+    file_handler = TimedRotatingFileHandler(log_file, when='D', encoding='utf-8', backupCount=5)
     file_handler.setFormatter(FORMATTER)
     return file_handler
 
