@@ -13,9 +13,8 @@ import pandas as pd
 import seaborn as sns
 from sklearn import metrics
 from sklearn.base import TransformerMixin
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
@@ -26,7 +25,6 @@ logger = logger_factory.get_logger('spacy_nlp')
 
 
 def show_figure(data):
-    # fg = plt.figure(figsize=(8,4))
     sns.barplot(x=data['clf'].unique(), y=data['clf'].value_counts())
     plt.show()
 
@@ -36,16 +34,34 @@ def print_n_most_informative(vectorizer, clf, N):
     coefs_with_fns = sorted(zip(clf.coef_[0], feature_names))
     top_class1 = coefs_with_fns[:N]
     top_class2 = coefs_with_fns[:-(N + 1):-1]
-    print("Class 1 best: ")
+    logger.info("Class 1 best: ")
     for feat in top_class1:
-        print(feat)
-    print("Class 2 best: ")
+        logger.info(feat)
+    logger.info("Class 2 best: ")
     for feat in top_class2:
-        print(feat)
+        logger.info(feat)
 
 
 def tokenize_text(sample):
     return sample.split()
+
+
+def get_df(path, show_df_info=False):
+    """
+    get dataFrame, if show_df_info is True, log the dataFrame head, null value count ands ample data.
+    :param path:
+    :param show_df_info:
+    :return:
+    """
+    logger.info(f'get data frame from file {path}')
+
+    contents = file_utils.read_line(path, lambda content: (content[0], content[1]), split='\t')
+    df = pd.DataFrame(contents, columns=['clf', 'text'])
+    if show_df_info:
+        logger.info(f'df head is \n {df.head()}')
+        logger.info(f'isnull count:\n {df.isnull().sum()}')
+        logger.info(f'train sample clf: {df["clf"].iloc[0]}, text: {df["text"].iloc[0]}')
+    return df
 
 
 class CleanTextTransformer(TransformerMixin):
@@ -57,41 +73,39 @@ class CleanTextTransformer(TransformerMixin):
 
 
 if __name__ == '__main__':
-    path = 'E:/ip_data/train/train.txt'
-    contents = file_utils.read_line(path, lambda content: (content[0], content[1]), split='\t')
-    df = pd.DataFrame(contents, columns=['clf', 'text'])
-    logger.info(f'df head is \n {df.head()}')
-    logger.info(f'isnull count:\n {df.isnull().sum()}')
-    train, test = train_test_split(df, test_size=0.1, random_state=42)
-    # logger.info(f'train sample clf: {train["clf"].iloc[0]}, text: {train["text"].iloc[0]}')
-    logger.info(f'train data set shape is: {train.shape}')
-    logger.info(f'test data set shape is: {test.shape}')
+    train_dada_path = 'E:/ip_data/train/train.txt'
+    test_dada_path = 'E:/ip_data/train/test.txt'
+    train_df = get_df(train_dada_path)
+    test_df = get_df(train_dada_path)
+    logger.info(f'train data set shape is: {train_df.shape}')
+    logger.info(f'test data set shape is: {test_df.shape}')
 
     # show_figure(train)
     vectorizer = CountVectorizer(tokenizer=tokenize_text, ngram_range=(1, 1))
+    tfidf_vectorizer = TfidfVectorizer(vectorizer)
     clf = LinearSVC()
-    pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer), ('clf', clf)])
+    pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', tfidf_vectorizer), ('clf', clf)])
     # data
-    train1 = train['text'].tolist()
-    labelsTrain1 = train['clf'].tolist()
-    test1 = test['text'].tolist()
-    labelsTest1 = test['clf'].tolist()
+    train_txt = train_df['text'].tolist()
+    train_labels = train_df['clf'].tolist()
+    test_txt = test_df['text'].tolist()
+    test_labels = test_df['clf'].tolist()
     # train
-    pipe.fit(train1, labelsTrain1)
+    pipe.fit(train_txt, train_labels)
     # test
-    preds = pipe.predict(test1)
-    print("accuracy:", accuracy_score(labelsTest1, preds))
-    print("Top 10 features used to predict: ")
+    preds = pipe.predict(test_txt)
+    logger.info(f'accuracy:{accuracy_score(test_labels, preds)}')
+    logger.info("Top 10 features used to predict: ")
 
-    print_n_most_informative(vectorizer, clf, 10)
-    pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', vectorizer)])
-    transform = pipe.fit_transform(train1, labelsTrain1)
-    vocab = vectorizer.get_feature_names()
-    for i in range(len(train1)):
+    print_n_most_informative(tfidf_vectorizer, clf, 10)
+    pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', tfidf_vectorizer)])
+    transform = pipe.fit_transform(train_txt, train_labels)
+    vocab = tfidf_vectorizer.get_feature_names()
+    for i in range(len(train_txt)):
         s = ""
         indexIntoVocab = transform.indices[transform.indptr[i]:transform.indptr[i + 1]]
         numOccurences = transform.data[transform.indptr[i]:transform.indptr[i + 1]]
         for idx, num in zip(indexIntoVocab, numOccurences):
             s += str((vocab[idx], num))
 
-    print(metrics.classification_report(labelsTest1, preds, target_names=df['clf'].unique()))
+    logger.info(metrics.classification_report(test_labels, preds, target_names=train_df['clf'].unique()))
