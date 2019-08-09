@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# @Description: 
+import gzip
+import os
+import pickle
+# @Description:
 # @File: classify.py
 # @Project: ip_nlp
 # @Author: Yiheng
 # @Email: GuoYiheng89@gmail.com
 # @Time: 8/5/2019 10:27
+from functools import reduce
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -24,22 +28,64 @@ from utils import file_utils
 logger = logger_factory.get_logger('spacy_nlp')
 
 
+def load(file_path):
+    logger.info(f'load model {file_path}')
+    stream = gzip.open(file_path, "rb")
+    model = pickle.load(stream)
+    stream.close()
+    return model
+
+
+def save(file_path, model):
+    logger.info(f'save model {file_path}')
+    stream = gzip.open(file_path, "wb")
+    pickle.dump(model, stream)
+    stream.close()
+
+
+def load_model(model_path, text_path):
+    """
+    load model if model files exist, else create, save it and return
+    :param model_path:
+    :param text_path:
+    :return:
+    """
+    txt_path = os.path.join(model_path, 'txt')
+    labels_path = os.path.join(model_path, 'labels')
+    if os.path.exists(txt_path) and os.path.exists(labels_path):
+        logger.info(f'model to load at {model_path} exist')
+        # load the model
+        txt = load(txt_path)
+        labels = load(labels_path)
+        return txt, labels
+    else:
+        logger.info(f'model to load at {model_path} not exist')
+        df = get_df(text_path)
+        txt = df['text'].tolist()
+        labels = df['clf'].tolist()
+        save(txt_path, txt)
+        save(labels_path, labels)
+        return txt, labels
+
+
 def show_figure(data):
     sns.barplot(x=data['clf'].unique(), y=data['clf'].value_counts())
     plt.show()
 
 
-def print_n_most_informative(vectorizer, clf, N):
+def print_n_most_informative(vectorizer, clf, N, labels):
     feature_names = vectorizer.get_feature_names()
-    coefs_with_fns = sorted(zip(clf.coef_[0], feature_names))
-    top_class1 = coefs_with_fns[:N]
-    top_class2 = coefs_with_fns[:-(N + 1):-1]
-    logger.info("Class 1 best: ")
-    for feat in top_class1:
-        logger.info(feat)
-    logger.info("Class 2 best: ")
-    for feat in top_class2:
-        logger.info(feat)
+    for i in range(len(clf.coef_)):
+        logger.info(f'label is {labels[i]}')
+        coefs_with_fns = sorted(zip(clf.coef_[i], feature_names))
+        top_class1 = coefs_with_fns[:N]
+        top_class2 = coefs_with_fns[:-(N + 1):-1]
+        logger.info("Class 1 best: ")
+        for feat in top_class1:
+            logger.info(feat)
+        logger.info("Class 2 best: ")
+        for feat in top_class2:
+            logger.info(feat)
 
 
 def tokenize_text(sample):
@@ -73,23 +119,19 @@ class CleanTextTransformer(TransformerMixin):
 
 
 if __name__ == '__main__':
-    train_dada_path = 'E:/ip_data/train/train.txt'
-    test_dada_path = 'E:/ip_data/train/test.txt'
-    train_df = get_df(train_dada_path)
-    test_df = get_df(train_dada_path)
-    logger.info(f'train data set shape is: {train_df.shape}')
-    logger.info(f'test data set shape is: {test_df.shape}')
 
-    # show_figure(train)
     vectorizer = CountVectorizer(tokenizer=tokenize_text, ngram_range=(1, 1))
     tfidf_vectorizer = TfidfVectorizer(vectorizer)
-    clf = LinearSVC()
+    clf = LinearSVC(C=10)
     pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', tfidf_vectorizer), ('clf', clf)])
-    # data
-    train_txt = train_df['text'].tolist()
-    train_labels = train_df['clf'].tolist()
-    test_txt = test_df['text'].tolist()
-    test_labels = test_df['clf'].tolist()
+
+    train_modle_dir = 'E:/ip_data/svc/train'
+    train_text_file = 'E:/ip_data/train/2500/train.txt'
+    test_modle_dir = 'E:/ip_data/svc/test'
+    test_text_file = 'E:/ip_data/train/2500/test.txt'
+
+    train_txt, train_labels = load_model(train_modle_dir, train_text_file)
+    test_txt, test_labels = load_model(test_modle_dir, test_text_file)
     # train
     pipe.fit(train_txt, train_labels)
     # test
@@ -97,15 +139,18 @@ if __name__ == '__main__':
     logger.info(f'accuracy:{accuracy_score(test_labels, preds)}')
     logger.info("Top 10 features used to predict: ")
 
-    print_n_most_informative(tfidf_vectorizer, clf, 10)
+    labels = reduce(lambda x, y: x if y in x else x + [y], [[]] + train_labels)
+    print(f'labels is {labels}')
+    print_n_most_informative(tfidf_vectorizer, clf, 10, labels)
+
     pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', tfidf_vectorizer)])
     transform = pipe.fit_transform(train_txt, train_labels)
     vocab = tfidf_vectorizer.get_feature_names()
     for i in range(len(train_txt)):
         s = ""
-        indexIntoVocab = transform.indices[transform.indptr[i]:transform.indptr[i + 1]]
-        numOccurences = transform.data[transform.indptr[i]:transform.indptr[i + 1]]
-        for idx, num in zip(indexIntoVocab, numOccurences):
+        index_into_vocab = transform.indices[transform.indptr[i]:transform.indptr[i + 1]]
+        num_occurences = transform.data[transform.indptr[i]:transform.indptr[i + 1]]
+        for idx, num in zip(index_into_vocab, num_occurences):
             s += str((vocab[idx], num))
 
-    logger.info(metrics.classification_report(test_labels, preds, target_names=train_df['clf'].unique()))
+    logger.info(f"{metrics.classification_report(test_labels, preds, target_names=labels)}")
