@@ -80,7 +80,7 @@ def write_clfs(clfs_info_file_path, store_dir_path, limit=0, write_less=True):
                                                section=clf.section,
                                                mainClass=clf.main_class,
                                                subClass=clf.sub_class)
-            write_clf_docs(store_dir, clf, clf_docs, '5000.txt')
+            write_clf_docs(store_dir, clf, clf_docs, f'{limit}.txt')
             logger.info(f'write clf {clf}')
             yield clf
 
