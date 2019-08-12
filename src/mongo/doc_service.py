@@ -73,8 +73,8 @@ def find_some(db_name: str, clc_name: str, limit: int):
     clc = get_collection(db_name, clc_name)
     limit = 0 if limit < 0 else limit
     cursor = clc.find({}).limit(limit)
-    while cursor.alive:
-        yield cursor.next()
+    for doc in cursor:
+        yield doc
 
 
 def find_all(db_name: str, clc_name: str):
@@ -98,8 +98,8 @@ def find_by_clf(db_name, clc_name, limit=300, **kwargs):
     :return:
     """
     cursor = find_cursor_by_clf(db_name, clc_name, limit, **kwargs)
-    while cursor.alive:
-        yield cursor.next()
+    for doc in cursor:
+        yield doc
 
 
 def find_cursor_by_clf(db_name, clc_name, limit, **kwargs):
@@ -129,9 +129,10 @@ if __name__ == '__main__':
     clc_raw = 'raw'
     # remove_redundant('ip_doc', 'raw')
     start_time = time.time()
-    docs = find_some(db_ip_doc, clc_raw, 3)
+    docs = find_by_clf(db_ip_doc, clc_raw, section='B', mainClass='29', subClass='K')
     # count = len(list(docs))
     # print('count is {}'.format(count))
+
     for doc in docs:
         logger.info(f'find doc pubId {doc["pubId"]}')
 
