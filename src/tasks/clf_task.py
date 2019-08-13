@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from os import path
-
-from common import logger_factory
-from models.classification import Classification
-from mongo import clf_service
 # @Description:
 # @File: clf_task.py
 # @Project: ip_nlp
 # @Author: Yiheng
 # @Email: GuoYiheng89@gmail.com
 # @Time: 7/18/2019 10:02
+
+from os import path
+
+from common import logger_factory
+from models.classification import Classification
+from mongo import clf_service
 from mongo import doc_service
 from mongo.utils import json_encoder
 from utils.clf_utils import gen_from_clf_str
@@ -73,7 +74,7 @@ def write_clfs(clfs_info_file_path, store_dir_path, limit=0, write_less=True):
                                            mainClass=clf.main_class,
                                            subClass=clf.sub_class)
 
-        logger.info(f'classification str is: {clf}, doc count: {count}')
+            logger.info(f'classification str is: {clf}, doc count: {count}')
 
         if write_less or count >= limit:
             clf_docs = doc_service.find_by_clf('ip_doc', 'raw', limit,
@@ -86,10 +87,10 @@ def write_clfs(clfs_info_file_path, store_dir_path, limit=0, write_less=True):
 
 
 if __name__ == '__main__':
-    clf_names_file = '../../resources/clf_all.txt'
-    store_dir = 'E:/ip_data/raw'
-    written_clf_names_file = '../../resources/clfs_gt_5000.txt'
-    clfs = write_clfs(clf_names_file, store_dir, limit=5000, write_less=False)
+    clf_names_file = '/home/tqhy/ip_nlp/resources/clfs/clfs_all.txt'
+    store_dir = '/home/tqhy/ip_nlp/resources/clfs/raw'
+    written_clf_names_file = '/home/tqhy/ip_nlp/resources/clfs/clfs_limit_2500.txt'
+    clfs = write_clfs(clf_names_file, store_dir, limit=2500, write_less=True)
     with open(written_clf_names_file, 'w', encoding='utf-8') as f:
         for clf in clfs:
             f.write(str(clf) + '\n')
