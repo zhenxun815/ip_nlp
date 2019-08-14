@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import gzip
-import os
-import pickle
 # @Description:
 # @File: classify.py
 # @Project: ip_nlp
 # @Author: Yiheng
 # @Email: GuoYiheng89@gmail.com
 # @Time: 8/5/2019 10:27
+
+import gzip
+import os
+import pickle
 from functools import reduce
 
 import matplotlib.pyplot as plt
@@ -17,7 +18,8 @@ import pandas as pd
 import seaborn as sns
 from sklearn import metrics
 from sklearn.base import TransformerMixin
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
@@ -102,6 +104,7 @@ def get_df(path, show_df_info=False):
     logger.info(f'get data frame from file {path}')
 
     contents = file_utils.read_line(path, lambda content: (content[0], content[1]), split='\t')
+
     df = pd.DataFrame(contents, columns=['clf', 'text'])
     if show_df_info:
         logger.info(f'df head is \n {df.head()}')
@@ -120,15 +123,20 @@ class CleanTextTransformer(TransformerMixin):
 
 if __name__ == '__main__':
 
-    vectorizer = CountVectorizer(tokenizer=tokenize_text, ngram_range=(1, 1))
-    tfidf_vectorizer = TfidfVectorizer(vectorizer)
-    clf = LinearSVC(C=10)
+    tfidf_vectorizer = TfidfVectorizer(tokenizer=tokenize_text, token_pattern=r'\b\w+\b', ngram_range=(1, 1))
+    clf = LinearSVC(C=1)
+    # clf = tree.DecisionTreeClassifier(min_samples_split=10, criterion="gini")
+    clf = RandomForestClassifier(n_estimators=30, criterion='entropy', min_samples_split=20)
     pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', tfidf_vectorizer), ('clf', clf)])
 
-    train_modle_dir = 'E:/ip_data/svc/train'
-    train_text_file = 'E:/ip_data/train/2500/train.txt'
-    test_modle_dir = 'E:/ip_data/svc/test'
-    test_text_file = 'E:/ip_data/train/2500/test.txt'
+    base_dir = 'E:/ip_data'
+    # base_dir = '../../resources'
+    text_dir = file_utils.make_dirs(base_dir, 'train/limit2500')
+
+    train_modle_dir = file_utils.make_dirs(base_dir, 'scv/train')
+    train_text_file = os.path.join(text_dir, 'train.txt')
+    test_modle_dir = file_utils.make_dirs(base_dir, 'svc/test')
+    test_text_file = os.path.join(text_dir, 'val.txt')
 
     train_txt, train_labels = load_model(train_modle_dir, train_text_file)
     test_txt, test_labels = load_model(test_modle_dir, test_text_file)
@@ -141,7 +149,7 @@ if __name__ == '__main__':
 
     labels = reduce(lambda x, y: x if y in x else x + [y], [[]] + train_labels)
     print(f'labels is {labels}')
-    print_n_most_informative(tfidf_vectorizer, clf, 10, labels)
+    # print_n_most_informative(tfidf_vectorizer, clf, 10, labels)
 
     pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', tfidf_vectorizer)])
     transform = pipe.fit_transform(train_txt, train_labels)
