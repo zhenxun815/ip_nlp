@@ -15,6 +15,13 @@ from common import logger_factory
 logger = logger_factory.get_logger('file_utils')
 
 
+def make_dirs(base_dir, sub_dir):
+    _dir = os.path.join(base_dir, sub_dir)
+    if not os.path.exists(_dir):
+        os.makedirs(_dir)
+    return _dir
+
+
 def save_list2file(list2write, dest_file: str):
     """
     write list elements to file line by line
@@ -24,7 +31,7 @@ def save_list2file(list2write, dest_file: str):
     """
     with open(dest_file, 'a', encoding='utf-8') as f:
         for item in list2write:
-            print('item to write {}'.format(item))
+            # print('item to write {}'.format(item))
             f.write(str(item) + '\n')
             # f.flush()
 
@@ -44,7 +51,7 @@ def get_files(dir_path, name_regx=None):
             return [os.path.join(dir_path, file) for file in files if _pattern.match(file)]
         return [os.path.join(dir_path, file) for file in files]
     else:
-        raise Exception('% is not a dir' % dir_path)
+        raise Exception(f'{dir_path} is not a dir')
 
 
 def read_line(file2read, work, split=None):
