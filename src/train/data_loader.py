@@ -4,7 +4,7 @@ import os
 from collections import Counter
 
 import numpy as np
-import tensorflow.keras as kr
+import tensorflow.python.keras as kr
 
 from common import logger_factory
 from utils import file_utils
@@ -58,7 +58,7 @@ def process_file(filename, word_to_id, cat_to_id, max_length=600):
         label_id.append(cat_to_id[label])
 
     # 使用keras提供的pad_sequences来将文本pad为固定长度
-    x_pad = kr.preprocessing.sequence.pad_sequences(data_id, max_length)
+    x_pad = kr.preprocessing.sequence.pad_sequences(data_id, max_length, truncating='post')
     y_pad = kr.utils.to_categorical(label_id, num_classes=len(cat_to_id))  # 将标签转换为one-hot表示
 
     return x_pad, y_pad
