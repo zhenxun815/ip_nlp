@@ -15,7 +15,7 @@ from sklearn import metrics
 from common import logger_factory
 from common import path_config
 from train.cnn_model import TCNNConfig, TextCNN
-from train.data_loader import read_vocab, read_category, batch_iter, process_file, build_vocab
+from train.data_loader import read_vocab, read_category, batch_iter, process_file, build_vocab, process_question_file
 
 base_dir = path_config.base_dir
 train_txt = path_config.train_txt
@@ -142,6 +142,46 @@ def train():
             break
 
 
+def write_answer_str(y_test, y_pred, answer_file):
+    with open(answer_file, 'a', encoding='utf-8') as f:
+        for index, y_pred_cls_item in enumerate(y_pred):
+            str2write = f'{y_test[index]}:{categories[y_pred_cls_item]}'
+            print(str2write)
+            f.write(f'{str2write}\n')
+
+
+def answer(question_file, answer_file):
+    train_logger.info("Loading test data...")
+    start_time = time.time()
+    x_test, y_test = process_question_file(question_file, word_to_id, config.seq_length)
+    session = tf.Session()
+    session.run(tf.global_variables_initializer())
+    saver = tf.train.Saver()
+    saver.restore(sess=session, save_path=save_path)  # 读取保存的模型
+
+    train_logger.info('Testing...')
+
+    batch_size = 128
+    data_len = len(x_test)
+    num_batch = int((data_len - 1) / batch_size) + 1
+
+    y_pred_cls = np.zeros(shape=len(x_test), dtype=np.int32)  # 保存预测结果
+    for i in range(num_batch):  # 逐批次处理
+        start_id = i * batch_size
+        end_id = min((i + 1) * batch_size, data_len)
+        feed_dict = {
+                model.input_x:   x_test[start_id:end_id],
+                model.keep_prob: 1.0
+        }
+        y_pred_cls[start_id:end_id] = session.run(model.y_pred_cls, feed_dict=feed_dict)
+
+    # 评估
+
+    write_answer_str(y_test, y_pred_cls, answer_file)
+    time_dif = get_time_dif(start_time)
+    train_logger.info(f'Time usage: {time_dif.total_seconds() / 60} min')
+
+
 def test():
     train_logger.info("Loading test data...")
     start_time = time.time()
@@ -162,6 +202,7 @@ def test():
     num_batch = int((data_len - 1) / batch_size) + 1
 
     y_test_cls = np.argmax(y_test, 1)
+
     y_pred_cls = np.zeros(shape=len(x_test), dtype=np.int32)  # 保存预测结果
     for i in range(num_batch):  # 逐批次处理
         start_id = i * batch_size
@@ -176,13 +217,16 @@ def test():
     train_logger.info("Precision, Recall and F1-Score...")
     train_logger.info(metrics.classification_report(y_test_cls, y_pred_cls, target_names=categories))
 
+    for index, y_pred_cls_item in enumerate(y_pred_cls):
+        print(f' index is {index}, y_pred_cls_item is {y_pred_cls_item}, cat name is {categories[y_pred_cls_item]}')
+
     # 混淆矩阵
     train_logger.info("Confusion Matrix...")
     cm = metrics.confusion_matrix(y_test_cls, y_pred_cls)
     train_logger.info(cm)
 
     time_dif = get_time_dif(start_time)
-    train_logger.info("Time usage:", time_dif)
+    train_logger.info(f'Time usage: {time_dif.total_seconds() / 60} min')
 
 
 def print_config_params(config):
@@ -215,7 +259,9 @@ if __name__ == '__main__':
     words, word_to_id = read_vocab(vocab_txt)
     config.vocab_size = len(words)
     model = TextCNN(config)
-    train()
+    # test()
+    answer('/home/tqhy/ip_nlp/resources/questions/光电.txt', '/home/tqhy/ip_nlp/resources/answers/光电.txt')
+    # answer('E:/ip_data/train/limit2500/test.txt')
     """if sys.argv[1] == 'train':
         train()
     else:
