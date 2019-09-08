@@ -10,10 +10,6 @@
 import os
 import re
 
-from common import logger_factory
-
-logger = logger_factory.get_logger('file_utils')
-
 
 def make_dirs(base_dir, sub_dir):
     _dir = os.path.join(base_dir, sub_dir)
@@ -65,8 +61,27 @@ def read_line(file2read, work, split=None):
                 yield work(line.strip())
 
 
+def remove_redundant(origin_file, dest_file):
+    """
+    make lines unique and write to a new file
+    :param origin_file:
+    :param dest_file:
+    :return:
+    """
+    print(f'origin file is: {origin_file}, dest file is: {dest_file}')
+    lines = read_line(origin_file, lambda line: line)
+
+    unique_lines = []
+    for line in lines:
+        if unique_lines.count(line) > 0:
+            print('line redundant...')
+            continue
+        print('add line ...')
+        unique_lines.append(line)
+
+    save_list2file(unique_lines, dest_file)
+
+
 if __name__ == '__main__':
 
-    data2train = read_line('../../resources/clfs/train/val.txt',
-                           lambda line_contents: (line_contents[0], line_contents[1].split()),
-                           split='\t')
+    remove_redundant('E:/ip_data/train/1300/test.txt', 'E:/ip_data/train/1300/test2.txt')
