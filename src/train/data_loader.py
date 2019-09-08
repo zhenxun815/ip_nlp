@@ -46,6 +46,19 @@ def to_words(content, words):
     return ''.join(words[x] for x in content)
 
 
+def process_question_file(filepath, word_to_id, max_length=600):
+    data2train = file_utils.read_line(filepath,
+                                      lambda line_contents: (line_contents[0], line_contents[1].split()),
+                                      split='\t')
+    data_id, y_pad = [], []
+    for pub_id, content in data2train:
+        data_id.append([word_to_id[word] for word in content if word in word_to_id])
+        y_pad.append(pub_id)
+    x_pad = kr.preprocessing.sequence.pad_sequences(data_id, max_length, truncating='post')
+
+    return x_pad, y_pad
+
+
 def process_file(filename, word_to_id, cat_to_id, max_length=600):
     """将文件转换为id表示"""
     data2train = file_utils.read_line(filename,
