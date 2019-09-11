@@ -21,7 +21,7 @@ logger = logger_factory.get_logger('segment')
 jieba.load_userdict(path_config.cnki_dict)
 
 # match decimal or single character
-digit_pattern = re.compile(r'^[0-9]+(\.[0-9]+)?[a-zA-Z%‰]?')
+digit_pattern = re.compile(r'^[0-9]+(\.[0-9]+)?[a-zA-Z%‰]?|^[a-zA-Z]$')
 chemistry_pattern1 = re.compile(r'(?P<chemistry>[a-zA-Z]+)(?P<digit>[0-9]+)?\.[0-9]+[%‰]?')
 chemistry_pattern2 = re.compile(r'(?P<chemistry>[a-zA-Z]+)(?P<digit>[0-9]+[%‰])')
 
@@ -42,7 +42,7 @@ def is_digit(words: str):
 
 
 def is_chemistry(words: str):
-    logger.info(f'str to judge is {words}')
+    # logger.info(f'str to judge is {words}')
     matcher1 = chemistry_pattern1.match(words)
     matcher2 = chemistry_pattern2.match(words)
     matcher = matcher1 if matcher1 else matcher2
@@ -57,11 +57,11 @@ def seg_raw_docs(raw_docs: list):
 def seg_raw_doc(raw_doc, stop_words: list):
     segmented_title = seg_text(raw_doc['title'], stop_words)
     segmented_abs = seg_text(raw_doc['abs'], stop_words)
-    segmented_claim = seg_text(raw_doc['claim'], stop_words)
+    # segmented_claim = seg_text(raw_doc['claim'], stop_words)
     segmented_doc = {'pubId': raw_doc['pubId'],
                      'title': segmented_title,
                      'abs':   segmented_abs,
-                     'claim': segmented_claim}
+                     }
     return segmented_doc
 
 
@@ -88,11 +88,12 @@ def test_jieba():
 
 
 if __name__ == '__main__':
-    text = '本发明H2O涉及S2园林机电Al1.0%技术领域\t实用新型 公开，具体云计算的1000ppm说是一种盆\n栽土壤0.25%养护      ' \
-           '作业平台，包括200B1机架、平连接，水管(53)另一端通过水泵H289%与水箱(51)相连接；所述)的气管0.01相连接。'
+    text = '本发明H2O涉及S2园林－机电Al1.0%技术领域\t实用新型 公开，具体A云计算的1000ppm说是一种盆\n栽土壤0.25%养护      ' \
+           '作业平台，包括200B1机架、平连接，水管(53)另一端通过水泵H2,89%与水箱(51)相连接；所述)的气管0.01相连接。'
     seg_list_accuracy = jieba.cut(text, cut_all=False)
     print(' '.join(seg_list_accuracy))
 
     stop_words = load_stop_words('../../resources/stps/stop_words.stp')
+
     tokens = seg_text(text, stop_words)
-    print(tokens)
+    print(f'tokens is {tokens}')

@@ -129,11 +129,11 @@ if __name__ == '__main__':
     clf = RandomForestClassifier(n_estimators=30, criterion='entropy', min_samples_split=20)
     pipe = Pipeline([('cleanText', CleanTextTransformer()), ('vectorizer', tfidf_vectorizer), ('clf', clf)])
 
-    base_dir = 'E:/ip_data'
-    # base_dir = '../../resources'
-    text_dir = file_utils.make_dirs(base_dir, 'train/limit2500')
+    # base_dir = 'E:/ip_data'
+    base_dir = '../../resources'
+    text_dir = file_utils.make_dirs(base_dir, 'train')
 
-    train_modle_dir = file_utils.make_dirs(base_dir, 'scv/train')
+    train_modle_dir = file_utils.make_dirs(base_dir, 'svc/train')
     train_text_file = os.path.join(text_dir, 'train.txt')
     test_modle_dir = file_utils.make_dirs(base_dir, 'svc/test')
     test_text_file = os.path.join(text_dir, 'val.txt')
@@ -160,5 +160,4 @@ if __name__ == '__main__':
         num_occurences = transform.data[transform.indptr[i]:transform.indptr[i + 1]]
         for idx, num in zip(index_into_vocab, num_occurences):
             s += str((vocab[idx], num))
-
     logger.info(f"{metrics.classification_report(test_labels, preds, target_names=labels)}")

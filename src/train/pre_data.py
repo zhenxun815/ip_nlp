@@ -10,9 +10,12 @@
 
 import json
 import os
+import random
 import re
 from os import path
 from random import choice
+
+from utils import file_utils
 
 
 def read_enough(file_path):
@@ -55,9 +58,9 @@ def read_less(file_path):
             elif index % 25 in range(23, 25):
                 test_contents.append(content)
 
-    all_contents.extend(makeup_less(train_contents, 2000))
-    all_contents.extend(makeup_less(val_contents, 300))
-    all_contents.extend(makeup_less(test_contents, 200))
+    all_contents.extend(makeup_less(train_contents, 8000))
+    all_contents.extend(makeup_less(val_contents, 1000))
+    all_contents.extend(makeup_less(test_contents, 1000))
     print(f'length of train docs {len(train_contents)}')
     print(f'length of val docs {len(val_contents)}')
     print(f'length of test docs {len(test_contents)}')
@@ -75,7 +78,7 @@ def makeup_less(makeup_contents: list, target: int):
     :return:
     """
     while len(makeup_contents) < target:
-        makeup_contents.append(choice(makeup_contents))
+        makeup_contents.append(random.choice(makeup_contents))
 
     return makeup_contents
 
@@ -117,8 +120,8 @@ def save_group_file(train_dir):
     train_txt = os.path.join(train_dir, 'train.txt')
     val_txt = os.path.join(train_dir, 'val.txt')
     test_txt = os.path.join(train_dir, 'test.txt')
-    clf_limit1300 = os.path.join(train_dir, 'clf_limit2500.txt')
-    f_clf = open(clf_limit1300, 'a', encoding='utf-8')
+    clf_limit2500 = os.path.join(train_dir, 'clf_limit2500.txt')
+    f_clf = open(clf_limit2500, 'a', encoding='utf-8')
     f_train = open(train_txt, 'a', encoding='utf-8')
     f_val = open(val_txt, 'a', encoding='utf-8')
     f_test = open(test_txt, 'a', encoding='utf-8')
@@ -126,8 +129,6 @@ def save_group_file(train_dir):
     seged_dir = train_dir.replace('train', 'clfs/seged')
 
     for f_name in os.listdir(seged_dir):
-        if f_name.find('old') > 0:
-            continue
 
         clf_name, doc_count = parse_filename(f_name)
 
@@ -175,5 +176,64 @@ def write_group(contents, f_train, f_val, f_test):
     return clf_name
 
 
+def get_less_clf(seged_dir, count=10000):
+    less_clf = []
+    enough_clf = []
+    for f_name in os.listdir(seged_dir):
+        clf_name, doc_count = parse_filename(f_name)
+        if doc_count < count:
+            less_clf.append(clf_name)
+        else:
+            enough_clf.append(clf_name)
+    return less_clf, enough_clf
+
+
+def split_list(data_list: list, portion: tuple, shuffle=True):
+    """
+
+    :param data_list:
+    :param portion: tuple
+    :param shuffle:
+    :return:
+    """
+    length = len(data_list)
+    train_portion = portion[0]
+    val_portion = portion[1]
+    test_portion = portion[2]
+    portion_total = train_portion + val_portion + test_portion
+    if length < portion_total:
+        print(f'not meet min size to split')
+        return
+    else:
+        random.shuffle(data_list)
+        split_index1 = int(length * train_portion / portion_total)
+        split_index2 = int(length * val_portion / portion_total) + split_index1
+        train_list = data_list[0:split_index1]
+        val_list = data_list[split_index1:split_index2]
+        test_list = data_list[split_index2:]
+        return [train_list, val_list, test_list]
+
+
+def concat_all(clf_dir, dest_dir, portion):
+    file_names = ['train.txt', 'val.txt', 'test.txt']
+    clf_name_file = os.path.join(dest_dir, 'clf_name.txt')
+    clf_names = []
+    for clf_file in os.listdir(clf_dir):
+        clf_name = clf_file[0:4]
+        clf_file_path = os.path.join(clf_dir, clf_file)
+        texts = file_utils.read_line(clf_file_path, lambda line: json.loads(line)['abs'])
+        splits = split_list(list(texts), portion)
+        if splits:
+            clf_names.append(clf_name)
+            print(f'write clf {clf_name}')
+            for index, list2write in enumerate(splits):
+                dest_file = os.path.join(dest_dir, file_names[index])
+                file_utils.save_list2file(list2write, dest_file, lambda text: f'{clf_name}\t{text}')
+        else:
+            print(f'not split')
+    file_utils.save_list2file(clf_names, clf_name_file)
+
+
 if __name__ == '__main__':
-    save_group_file('E:/ip_data/train/limit2500')
+    # save_group_file('E:/ip_data/train/rnn')
+    concat_all('E:/ip_data/clfs/seged/limit10000', 'E:/ip_data/clfs/', (5, 2, 3))

@@ -7,11 +7,11 @@ class TCNNConfig(object):
     """CNN配置参数"""
 
     embedding_dim = 128  # 词向量维度
-    seq_length = 210  # 序列长度
-    num_classes = 244  # 类别数
-    num_filters = 256  # 卷积核数目
+    seq_length = 200  # 序列长度
+    num_classes = 623  # 类别数
+    num_filters = 128  # 卷积核数目
     kernel_size = 3  # 卷积核尺寸
-    vocab_size = 200000  # 词汇表达小
+    vocab_size = 500000  # 词汇表达小
 
     hidden_dim = 128  # 全连接层神经元
 

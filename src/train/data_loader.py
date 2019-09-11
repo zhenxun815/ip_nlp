@@ -33,9 +33,9 @@ def read_vocab(vocab_dir):
     return words, word_to_id
 
 
-def read_category(seged_dir_path):
+def read_category(clf_name_file):
     """读取分类目录，固定"""
-    categories = [x[0:4] for x in os.listdir(seged_dir_path)]
+    categories = list(file_utils.read_line(clf_name_file, lambda line: line))
     cat_to_id = dict(zip(categories, range(len(categories))))
 
     return categories, cat_to_id

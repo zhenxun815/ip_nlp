@@ -18,18 +18,23 @@ def make_dirs(base_dir, sub_dir):
     return _dir
 
 
-def save_list2file(list2write, dest_file: str):
+def save_list2file(list2write, dest_file: str, work=None):
     """
     write list elements to file line by line
+    :param work: func, process each item in the list
     :param list2write:
     :param dest_file
     :return:
     """
+    print(f'start writing data to: {dest_file}')
     with open(dest_file, 'a', encoding='utf-8') as f:
         for item in list2write:
             # print('item to write {}'.format(item))
+            if work:
+                item = work(item)
             f.write(str(item) + '\n')
             # f.flush()
+    print(f'complete writing data to: {dest_file}')
 
 
 def get_files(dir_path, name_regx=None):
@@ -51,6 +56,7 @@ def get_files(dir_path, name_regx=None):
 
 
 def read_line(file2read, work, split=None):
+    print(f'start reading {file2read}')
     with open(file2read, encoding='utf-8') as f:
         for line in f:
             if split:
@@ -59,6 +65,7 @@ def read_line(file2read, work, split=None):
                     yield work(work_content)
             else:
                 yield work(line.strip())
+    print(f'complete reading {file2read}')
 
 
 def remove_redundant(origin_file, dest_file):
