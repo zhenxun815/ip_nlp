@@ -14,7 +14,8 @@ from utils.file_utils import make_dirs
 base_dir = 'E:/ip_data'
 # base_dir = '../../resources'
 dict_dir = make_dirs(base_dir, 'custom_dict')
-cnki_dict = os.path.join(dict_dir, 'cnki_dict.txt')
+cnki_dict = os.path.join(dict_dir, 'cnki_trans_clean.txt')
+stp_words = os.path.join(dict_dir, 'stop_words.stp')
 
 train_dir = make_dirs(base_dir, 'train/rnn')
 
