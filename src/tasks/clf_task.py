@@ -15,6 +15,7 @@ from models.classification import Classification
 from mongo import clf_service
 from mongo import doc_service
 from mongo.utils import json_encoder
+from utils import file_utils
 from utils.clf_utils import gen_from_clf_str
 
 logger = logger_factory.get_logger('clf_task')
@@ -27,13 +28,10 @@ def get_clf_str_from_file(clf_names_file_path: str):
     :param clf_names_file_path:file path store classification infos
     :return:
     """
-    with open(clf_names_file_path, encoding='utf-8') as f:
-        for line in f.readlines():
-            # print('read classification line str is {}'.format(line))
-            yield gen_from_clf_str(line)
+    return file_utils.read_line(clf_names_file_path, lambda line: gen_from_clf_str(line))
 
 
-def write_clf_docs(store_dir: str, clf: Classification, docs, file_suffix: str):
+def write_clf_docs(store_dir: str, clf: Classification, docs):
     """
     write ip docs json string to a local file line by line, the file was named
     in format like 'A_01_B_300.txt'. The number in file name is the count of docs
@@ -41,18 +39,17 @@ def write_clf_docs(store_dir: str, clf: Classification, docs, file_suffix: str):
     :param store_dir:
     :param clf:
     :param docs: get from mongo, each item is a Bson obj
-    :param file_suffix: file name suffix
     :return:
     """
+    doc_list = list(docs)
+    file_suffix = f'{len(doc_list)}.txt'
     logger.info(f'start write tasks {clf} with suffix {file_suffix}')
 
     file_name = f'{clf}_{file_suffix}'
     file_path = path.join(store_dir, file_name)
     logger.info(f'tasks docs store file path is {file_path}')
 
-    with open(file_path, 'a', encoding='utf-8') as f:
-        for doc in docs:
-            f.write(f'{json_encoder.doc2json(doc)}\n')
+    file_utils.save_list2file(doc_list, file_path, lambda doc: json_encoder.doc2json(doc))
 
 
 def write_clfs(clfs_info_file_path, store_dir_path, limit=0, write_less=True):
@@ -81,7 +78,7 @@ def write_clfs(clfs_info_file_path, store_dir_path, limit=0, write_less=True):
                                                section=clf.section,
                                                mainClass=clf.main_class,
                                                subClass=clf.sub_class)
-            write_clf_docs(store_dir, clf, clf_docs, f'{limit}.txt')
+            write_clf_docs(store_dir, clf, clf_docs)
             logger.info(f'write clf {clf}')
             yield clf
 
