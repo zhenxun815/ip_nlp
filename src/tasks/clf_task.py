@@ -77,7 +77,8 @@ def write_clf(store_dir, limit, write_less, clf):
                                                   section=clf.section,
                                                   mainClass=clf.main_class,
                                                   subClass=clf.sub_class)
-        count = limit if count >= limit else count
+
+        count = limit if 0 < limit <= count else count
         write_docs(store_dir, clf, clf_docs, count)
         logger.info(f'write clf {clf}')
     return clf
@@ -94,10 +95,10 @@ def write_all(clf_names_file, store_dir, limit=0, write_less=True, pool_size=2):
 
 
 if __name__ == '__main__':
-    clf_names_file = 'E:/ip_data/tmp/clfs_all2.txt'
-    store_dir = 'E:/ip_data/tmp'
+    clf_names_file = '/home/tqhy/ip_nlp/resources/clfs/clfs_all.txt'
+    store_dir = '/home/tqhy/ip_nlp/resources/clfs/raw/no_limit'
     start_time = time.time()
-    clfs = write_all(clf_names_file, store_dir, 10000, True, cpu_count())
+    clfs = write_all(clf_names_file, store_dir, 0, True, cpu_count())
     for clf in clfs:
         print(f'{clf}')
     end_time = time.time()
