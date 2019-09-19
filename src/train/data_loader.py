@@ -14,7 +14,9 @@ logger = logger_factory.get_logger('data_loader')
 
 def build_vocab(train_txt_path, vocab_txt_path, vocab_size=5000):
     """根据训练集构建词汇表，存储"""
-    contents = file_utils.read_line(train_txt_path, lambda line_contents: line_contents[1], split='\t')
+    contents = file_utils.read_line(train_txt_path,
+                                    lambda line_contents: line_contents[1] if len(line_contents) > 1 else '',
+                                    split='\t')
 
     counter = Counter([word for content in contents for word in content.split()])
     count_pairs = counter.most_common(vocab_size - 1)
