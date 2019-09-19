@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import functools
 # @Description:
 # @File: clf_task.py
 # @Project: ip_nlp
 # @Author: Yiheng
 # @Email: GuoYiheng89@gmail.com
 # @Time: 7/18/2019 10:02
-
+import time
+from datetime import timedelta
+from multiprocessing import Pool, cpu_count
 from os import path
 
 from common import logger_factory
@@ -31,7 +34,7 @@ def get_clf_str_from_file(clf_names_file_path: str):
     return file_utils.read_line(clf_names_file_path, lambda line: gen_from_clf_str(line))
 
 
-def write_clf_docs(store_dir: str, clf: Classification, docs):
+def write_docs(store_dir: str, clf: Classification, docs, count):
     """
     write ip docs json string to a local file line by line, the file was named
     in format like 'A_01_B_300.txt'. The number in file name is the count of docs
@@ -41,53 +44,62 @@ def write_clf_docs(store_dir: str, clf: Classification, docs):
     :param docs: get from mongo, each item is a Bson obj
     :return:
     """
-    doc_list = list(docs)
-    file_suffix = f'{len(doc_list)}.txt'
+
+    file_suffix = f'{count}.txt'
     logger.info(f'start write tasks {clf} with suffix {file_suffix}')
 
     file_name = f'{clf}_{file_suffix}'
     file_path = path.join(store_dir, file_name)
     logger.info(f'tasks docs store file path is {file_path}')
 
-    file_utils.save_list2file(doc_list, file_path, lambda doc: json_encoder.doc2json(doc))
+    file_utils.save_list2file(docs, file_path, lambda doc: json_encoder.doc2json(doc))
 
 
-def write_clfs(clfs_info_file_path, store_dir_path, limit=0, write_less=True):
+def write_clf(store_dir, limit, write_less, clf):
     """
     write docs of classifications in the classification info file to local file
     and yield the written Classification obj
-    :param clfs_info_file_path:
-    :param store_dir_path:
+    :param store_dir:
     :param limit: max count of docs to write
     :param write_less: whether write clf whose docs count less than limit or not
     :return:
     """
-    classifications = get_clf_str_from_file(clfs_info_file_path)
-    store_dir = store_dir_path
-    for clf in classifications:
-        if not write_less:
-            count = clf_service.count_docs('ip_doc', 'raw',
-                                           section=clf.section,
-                                           mainClass=clf.main_class,
-                                           subClass=clf.sub_class)
 
-            logger.info(f'classification str is: {clf}, doc count: {count}')
+    count = clf_service.count_docs('ip_doc', 'raw',
+                                   section=clf.section,
+                                   mainClass=clf.main_class,
+                                   subClass=clf.sub_class)
 
-        if write_less or count >= limit:
-            clf_docs = doc_service.find_by_clf('ip_doc', 'raw', limit,
-                                               section=clf.section,
-                                               mainClass=clf.main_class,
-                                               subClass=clf.sub_class)
-            write_clf_docs(store_dir, clf, clf_docs)
-            logger.info(f'write clf {clf}')
-            yield clf
+    logger.info(f'classification str is: {clf}, doc count: {count}')
+
+    if write_less or count >= limit:
+        clf_docs = doc_service.find_cursor_by_clf('ip_doc', 'raw', limit,
+                                                  section=clf.section,
+                                                  mainClass=clf.main_class,
+                                                  subClass=clf.sub_class)
+        count = limit if count >= limit else count
+        write_docs(store_dir, clf, clf_docs, count)
+        logger.info(f'write clf {clf}')
+    return clf
+
+
+def write_all(clf_names_file, store_dir, limit=0, write_less=True, pool_size=2):
+    write_clf_func = functools.partial(write_clf, store_dir, limit, write_less)
+    clfs2write = get_clf_str_from_file(clf_names_file)
+    pool = Pool(pool_size)
+    clfs_cmp = pool.map(write_clf_func, list(clfs2write))
+    pool.close()
+    pool.join()
+    return clfs_cmp
 
 
 if __name__ == '__main__':
-    clf_names_file = '/home/tqhy/ip_nlp/resources/clfs/clfs_all.txt'
-    store_dir = '/home/tqhy/ip_nlp/resources/clfs/raw'
-    written_clf_names_file = '/home/tqhy/ip_nlp/resources/clfs/clfs_limit_2500.txt'
-    clfs = write_clfs(clf_names_file, store_dir, limit=2500, write_less=True)
-    with open(written_clf_names_file, 'w', encoding='utf-8') as f:
-        for clf in clfs:
-            f.write(str(clf) + '\n')
+    clf_names_file = 'E:/ip_data/tmp/clfs_all2.txt'
+    store_dir = 'E:/ip_data/tmp'
+    start_time = time.time()
+    clfs = write_all(clf_names_file, store_dir, 10000, True, cpu_count())
+    for clf in clfs:
+        print(f'{clf}')
+    end_time = time.time()
+    time_dif = timedelta(seconds=int(round(end_time - start_time)))
+    print(f'all task complete take time {time_dif}')
