@@ -63,12 +63,18 @@ def process_question_file(filepath, word_to_id, max_length=600):
 
 def process_file(filename, word_to_id, cat_to_id, max_length=600):
     """将文件转换为id表示"""
+
+    def judge(line_contents):
+        return (line_contents[0], line_contents[1].split()) if len(line_contents) > 1 else ('', '')
+
     data2train = file_utils.read_line(filename,
-                                      lambda line_contents: (line_contents[0], line_contents[1].split()),
+                                      lambda line_contents: judge(line_contents),
                                       split='\t')
 
     data_id, label_id = [], []
     for label, content in data2train:
+        if len(label) == 0 or len(content) == 0:
+            continue
         data_id.append([word_to_id[word] for word in content if word in word_to_id])
         label_id.append(cat_to_id[label])
 
