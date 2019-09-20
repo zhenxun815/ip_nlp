@@ -67,7 +67,7 @@ def get_files(dir_path, name_regx=None):
         raise Exception(f'{dir_path} is not a dir')
 
 
-def read_line(file2read, work, split=None):
+def read_line(file2read, work=None, split=None):
     print(f'start reading {file2read}')
     with open(file2read, encoding='utf-8') as f:
         for line in f:
@@ -75,6 +75,7 @@ def read_line(file2read, work, split=None):
             if split:
                 content = content.split(split)
             if work:
+                # print(f'work content {content}')
                 yield work(content)
             else:
                 yield content
