@@ -43,7 +43,7 @@ def save_list2file(list2save, dest_file: str, work_func=None, filter_func=None, 
     with open(dest_file, 'a', encoding='utf-8') as f:
         for item in list2save:
             # print(f'item to write {item}')
-            if filter_func(item):
+            if filter_func and filter_func(item):
                 if work_func:
                     item = work_func(item)
                 line = f'{str(item)}\n' if new_line else f' {str(item)}'
