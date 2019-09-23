@@ -30,21 +30,24 @@ def save_dict2file(dict2save: dict, dest_file: str, work=None, split=':'):
     print(f'complete writing data to: {dest_file}')
 
 
-def save_list2file(list2save, dest_file: str, work=None):
+def save_list2file(list2save, dest_file: str, work_func=None, filter_func=None, new_line=True):
     """
     write list elements to file line by line
-    :param work: func, process each item in the list
     :param list2save:
     :param dest_file
+    :param work_func: func, process each item in the list
+    :param filter: func, filter item
     :return:
     """
     print(f'start writing data to: {dest_file}')
     with open(dest_file, 'a', encoding='utf-8') as f:
         for item in list2save:
             # print(f'item to write {item}')
-            if work:
-                item = work(item)
-            f.write(str(item) + '\n')
+            if filter_func(item):
+                if work_func:
+                    item = work_func(item)
+                line = f'{str(item)}\n' if new_line else f' {str(item)}'
+                f.write(line)
     print(f'complete writing data to: {dest_file}')
 
 
