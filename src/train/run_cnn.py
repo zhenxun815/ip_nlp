@@ -16,7 +16,6 @@ from common import logger_factory
 from common import path_config
 from train.cnn_model import TCNNConfig, TextCNN
 from train.data_loader import read_vocab, read_category, batch_iter, process_file, build_vocab, process_question_file
-from utils import file_utils
 
 base_dir = path_config.base_dir
 train_txt = path_config.train_txt
@@ -153,10 +152,10 @@ def write_answer_str(y_test, y_pred, answer_file):
 
 def answer(question_dir, answer_dir):
     train_logger.info("Loading test data...")
+    start_time = time.time()
     for question_file_name in os.listdir(question_dir):
         question_file = os.path.join(question_dir, question_file_name)
         answer_file = os.path.join(answer_dir, question_file_name)
-        start_time = time.time()
         x_test, y_test = process_question_file(question_file, word_to_id, config.seq_length)
         session = tf.Session()
         session.run(tf.global_variables_initializer())
@@ -184,14 +183,6 @@ def answer(question_dir, answer_dir):
         write_answer_str(y_test, y_pred_cls, answer_file)
     time_dif = get_time_dif(start_time)
     train_logger.info(f'Time usage: {time_dif.total_seconds() / 60} min')
-
-
-def answer_score(my_answer_dir, right_anser_dir):
-    for answer_file_name in os.listdir(my_answer_dir):
-        my_answer_file = os.path.join(my_answer_dir, answer_file_name)
-        right_answer_file = os.path.join(right_anser_dir, answer_file_name)
-        my_answer_dict = {}
-        file_utils.read_line(my_answer_file, lambda split: (split[0], split[1]), split=':')
 
 
 def test():

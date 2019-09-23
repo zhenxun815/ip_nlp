@@ -12,7 +12,7 @@
 class MongoConfigs:
     """configs of mongodb"""
     # uri configs
-    db_host = '192.168.1.205'
+    db_host = '192.168.1.204'
     db_port = 27017
     username = 'tqhy'
     password = 'tqhy817'

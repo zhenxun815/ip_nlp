@@ -13,7 +13,6 @@ import os
 import random
 import re
 from os import path
-from random import choice
 
 from utils import file_utils
 
@@ -234,6 +233,44 @@ def concat_all(clf_dir, dest_dir, portion):
     file_utils.save_list2file(clf_names, clf_name_file)
 
 
+def create_copus(seged_clf_dir, copus_file):
+    for seged_clf_file in os.listdir(seged_clf_dir):
+        print(f'add clf {seged_clf_file}')
+        file2read = os.path.join(seged_clf_dir, seged_clf_file)
+        texts = file_utils.read_line(file2read, lambda line: json.loads(line)['abs'])
+        file_utils.save_list2file(texts, copus_file, filter_func=lambda text: text and len(text) > 0, new_line=False)
+    print(f'create copus complete')
+
+
+def get_clf_info(dir):
+    clf_dict = {}
+    total_count = 0
+    for fname in os.listdir(dir):
+        clf_info = fname.split('.')[0]
+        clf_name = clf_info.split('_')[0]
+        clf_count = int(clf_info.split('_')[1])
+        clf_dict[clf_name] = clf_count
+        print(f'clf_info: {clf_info},clf_name: {clf_name}, clf_count: {clf_count}')
+        total_count += clf_count
+
+    return clf_dict, total_count
+
+
 if __name__ == '__main__':
     # save_group_file('E:/ip_data/train/rnn')
-    concat_all('E:/ip_data/clfs/seged/limit10000', 'E:/ip_data/clfs/', (5, 2, 3))
+    # concat_all('E:/ip_data/clfs/new_seged/limit10000', 'E:/ip_data/clfs/', (5, 2, 3))
+    # create_copus('E:/ip_data/clfs/new_seged/no_limit','E:/ip_data/clfs/new_seged/no_limit_t/copus.txt')
+    seged_dir = 'E:/ip_data/clfs/new_seged/no_limit'
+    select_dir = 'E:/ip_data/clfs/new_seged/no_limit_t'
+    clf_dict, total_count = get_clf_info(seged_dir)
+    for clf_file in os.listdir(seged_dir):
+        clf_name = clf_file[0:4]
+        clf_count = clf_dict[clf_name]
+        read_count = int(clf_count / total_count * 10000)
+        if read_count > 20:
+            file2read = os.path.join(seged_dir, clf_file)
+            lines = list(file_utils.read_line(file2read))
+            random.shuffle(lines)
+            print(f'clf {clf_name}, clf count {clf_count}, write count {read_count}')
+            save_file = f'{clf_name}_{read_count}.txt'
+            file_utils.save_list2file(lines[0:read_count], os.path.join(select_dir, save_file))

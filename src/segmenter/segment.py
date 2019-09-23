@@ -19,9 +19,9 @@ from common import path_config
 logger = logger_factory.get_logger('segment')
 
 jieba.load_userdict(path_config.cnki_dict)
-
 # match decimal or single character
 digit_pattern = re.compile(r'^[0-9]+(\.[0-9]+)?[a-zA-Z%‰]?|^[a-zA-Z]$')
+dna_pattern = re.compile(r'[ACTGU]{8,}')
 chemistry_pattern1 = re.compile(r'(?P<chemistry>[a-zA-Z]+)(?P<digit>[0-9]+)?\.[0-9]+[%‰]?')
 chemistry_pattern2 = re.compile(r'(?P<chemistry>[a-zA-Z]+)(?P<digit>[0-9]+[%‰])')
 
@@ -36,9 +36,13 @@ def load_stop_words(file_path):
     return [line for line in content.splitlines()]
 
 
+stop_words = load_stop_words(path_config.stp_words)
+
+
 def is_digit(words: str):
-    matcher = digit_pattern.match(words)
-    return matcher is not None
+    matcher1 = digit_pattern.match(words)
+    matcher2 = dna_pattern.match(words.upper())
+    return matcher1 or matcher2
 
 
 def is_chemistry(words: str):
@@ -54,14 +58,16 @@ def seg_raw_docs(raw_docs: list):
     return [seg_raw_doc(raw_doc) for raw_doc in raw_docs]
 
 
-def seg_raw_doc(raw_doc, stop_words: list):
-    segmented_title = seg_text(raw_doc['title'], stop_words)
-    segmented_abs = seg_text(raw_doc['abs'], stop_words)
+def seg_raw_doc(raw_doc):
+    print(f"pid {os.getpid()} start seg {raw_doc['pubId']}")
+    segmented_title = seg_text(raw_doc['title'])
+    segmented_abs = seg_text(raw_doc['abs'])
     # segmented_claim = seg_text(raw_doc['claim'], stop_words)
-    segmented_doc = {'pubId': raw_doc['pubId'],
-                     'title': segmented_title,
-                     'abs':   segmented_abs,
-                     }
+    segmented_doc = {
+            'pubId': raw_doc['pubId'],
+            'title': segmented_title,
+            'abs':   segmented_abs,
+    }
     return segmented_doc
 
 
@@ -72,9 +78,9 @@ def clear_str(string: str):
     return string
 
 
-def seg_text(text: str, stop_words: list):
+def seg_text(text: str):
     raw_words = jieba.cut(clear_str(text), cut_all=False)
-    tokens = [is_chemistry(token) for token in raw_words if token not in stop_words and not is_digit(token)]
+    tokens = [is_chemistry(token).lower() for token in raw_words if token not in stop_words and not is_digit(token)]
     return ' '.join(tokens)
 
 
@@ -88,12 +94,10 @@ def test_jieba():
 
 
 if __name__ == '__main__':
-    text = '本发明H2O涉及S2园林－机电Al1.0%技术领域\t实用新型 公开，具体A云计算的1000ppm说是一种盆\n栽土壤0.25%养护      ' \
-           '作业平台，包括200B1机架、平连接，水管(53)另一端通过水泵H2,89%与水箱(51)相连接；所述)的气管0.01相连接。'
+    text = '吴式太极拳,最小二乘拟合,acgacgaCGCAAaaaaa,食指操作追踪球和拇指操作追踪球,本发明H2O涉及S2园林－机电Al1.0%技术领域\t实用新型 公开，具体A云计算的1000ppm说是一种盆\n栽土壤0.25%养护      ' \
+           '作业平台，包括200B1机架、平连接，水管(53)另一端通过水泵H2,89%与水箱(51)相连接；所述)的气管隐马尔可夫模型0.01相连接。'
     seg_list_accuracy = jieba.cut(text, cut_all=False)
     print(' '.join(seg_list_accuracy))
 
-    stop_words = load_stop_words('../../resources/stps/stop_words.stp')
-
-    tokens = seg_text(text, stop_words)
+    tokens = seg_text(text)
     print(f'tokens is {tokens}')

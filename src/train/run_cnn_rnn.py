@@ -42,11 +42,13 @@ def create_lstm_model():
 def create_conv_model():
     model_conv = kr.models.Sequential()
     model_conv.add(kr.layers.Embedding(vocabulary_size, 256, input_length=300))
-    model_conv.add(kr.layers.Conv1D(256, 3, activation='relu'))
+    model_conv.add(kr.layers.Conv1D(256, 3, padding="same", activation='relu', strides=1))
     model_conv.add(kr.layers.MaxPooling1D(pool_size=4))
-    model_conv.add(kr.layers.Dropout(0.5))
-    model_conv.add(kr.layers.LSTM(256))
-    model_conv.add(kr.layers.Dropout(0.5))
+    model_conv.add(kr.layers.Dropout(0.3))
+    # model_conv.add(kr.layers.Dense(50, activation='softmax'))
+    model_conv.add(kr.layers.LSTM(256, return_sequences=True))
+    model_conv.add(kr.layers.Dropout(0.3))
+    model_conv.add(kr.layers.Dense(256, activation='softmax'))
     model_conv.add(kr.layers.Dense(50, activation='softmax'))
     model_conv.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     return model_conv
@@ -69,4 +71,5 @@ if __name__ == '__main__':
     data = kr.preprocessing.sequence.pad_sequences(sequences, maxlen=300, padding='post', truncating='post')
 
     model = create_conv_model()
+    model.summary()
     model.fit(data, df_labels, validation_split=0.2, epochs=3)

@@ -9,32 +9,35 @@
 # @Time: 7/30/2019 11:17
 
 import json
+import os
+from multiprocessing import Pool, cpu_count
 from os import path
 
 from segmenter import segment
 from utils import file_utils
 
+NUMBER_OF_PROCESSES = cpu_count()
 
-def seg_docs_under_dir(dir_path, file_name_regx, stop_words_path):
-    files2reg = file_utils.get_files(dir_path, file_name_regx)
-    print(files2reg)
-    stop_words = segment.load_stop_words(stop_words_path)
-    for file in files2reg:
-        with open(file) as f:
-            for line in f.readlines():
-                clf_json = json.loads(line)
-                seged_doc = segment.seg_raw_doc(clf_json, stop_words)
-                yield path.basename(file), seged_doc
+
+def seg_clf_file(clf_file_pair):
+    raw_clf_file, seged_clf_file = clf_file_pair
+    print(f'seg file {raw_clf_file} to {seged_clf_file}')
+    seged_lines = file_utils.read_line(raw_clf_file, lambda line: segment.seg_raw_doc(json.loads(line)))
+    file_utils.save_list2file(seged_lines, seged_clf_file, lambda doc_json: json.dumps(doc_json, ensure_ascii=False))
+
+
+def seg_docs_under_dir(raw_files_dir, seged_files_dir):
+    file_pairs = [(path.join(raw_files_dir, filename), path.join(seged_files_dir, filename)) for filename in
+                  os.listdir(raw_files_dir)]
+    print(f'file pairs {file_pairs}')
+    pool = Pool(2)
+    pool.map(seg_clf_file, file_pairs)
+    pool.close()
+    pool.join()
 
 
 if __name__ == '__main__':
-    regx = r'[A-Z][0-9]{2}[A-Z]_[0-9]+.txt'
-    raw_dir_path = 'E:/ip_data/clfs/raw/limit10000'
-    seged_dir_path = 'E:/ip_data/clfs/seged/limit10000'
-    stop_words_path = '../../resources/stps/stop_words.stp'
-
-    for file_name, doc in seg_docs_under_dir(raw_dir_path, regx, stop_words_path):
-        # print(f'file is {file_name},seged doc is {doc["pubId"]}')
-        seged_file = path.join(seged_dir_path, file_name)
-        with open(seged_file, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(doc, ensure_ascii=False) + '\n')
+    raw_dir = 'E:/ip_data/clfs/raw/2500'
+    seged_dir = 'E:/ip_data/clfs/new_seged/2500'
+    print(f'core num {NUMBER_OF_PROCESSES}')
+    seg_docs_under_dir(raw_dir, seged_dir)
