@@ -12,8 +12,6 @@ import os
 import re
 from multiprocessing import Pool, cpu_count
 
-import jieba
-
 from segmenter.dict_utils import load_dictionary, generate_ngram, save_model, load_model
 from segmenter.trie_model import TrieNode
 from utils import file_utils
@@ -25,7 +23,7 @@ abs_dir = 'E:/dict/abs'
 new_words_dir = 'E:/dict/nwd'
 """
 basedir = '/home/tqhy/ip_nlp/resources/custom_dict'
-abs_dir = '/home/tqhy/ip_nlp/resources/clfs/abs/no_limit'
+abs_dir = '/home/tqhy/ip_nlp/resources/clfs/abs/seged'
 new_words_dir = '/home/tqhy/ip_nlp/resources/custom_dict/new_words'
 """
 root_name = basedir + "/root.pkl"
@@ -37,16 +35,15 @@ def is_chinese(words: str, stp_words):
     return result
 
 
-def load_data(filename, stp_words):
+def load_data(filename):
     """
     :param filename:
-    :param stopwords:
     :return: 二维数组,[[句子1分词list], [句子2分词list],...,[句子n分词list]]
     """
     data = []
     with open(filename, 'r') as f:
         for line in f:
-            word_list = [x for x in jieba.cut(line.strip(), cut_all=False) if is_chinese(x, stp_words)]
+            word_list = line.split()[0:200]
             data.append(word_list)
     return data
 
@@ -56,27 +53,43 @@ def load_data_2_root(data, model):
     for word_list in data:
         # tmp 表示每一行自由组合后的结果（n gram）
         # tmp: [['它'], ['是'], ['小'], ['狗'], ['它', '是'], ['是', '小'], ['小', '狗'], ['它', '是', '小'], ['是', '小', '狗']]
+        # print(f'start gen ngram: {word_list}')
         ngrams = generate_ngram(word_list, 3)
         for d in ngrams:
             model.add(d)
     print('------> 插入成功')
 
 
-def find_new_words(root, stp_words, file_pair):
+def find_new_words(root, file_pair):
     abs_file, new_words_file = file_pair[0], file_pair[1]
     print(f'start find new word in {abs_file}')
-    datas = load_data(abs_file, stp_words)
+    datas = load_data(abs_file)
     model = root
+    topN = 2
     if len(datas) > 0:
-        load_data_2_root(datas, model)
-        topN = 10
-        result, add_word = model.find_word(topN)
-        file_utils.save_dict2file(add_word, new_words_file, work=lambda k, v: (k, ''), split='')
+        tmp = []
+        count = 0
+        words2add = set()
+        for item in datas:
+            tmp.append(item)
+            count += 1
+            if count % 40 == 0:
+                load_data_2_root(tmp, model)
+                result, add_word = model.find_word(topN)
+                words2add.update(add_word.keys())
+                print(f'words2add: {words2add}, {count}')
+                tmp.clear()
+        if len(tmp) > 0:
+            print(f'{words2add}')
+            load_data_2_root(tmp, model)
+            result, add_word = model.find_word(topN)
+            words2add.update(add_word.keys())
+            print(f'words2add: {words2add}, {count}')
+            tmp.clear()
+        file_utils.save_list2file(words2add, new_words_file)
 
 
 if __name__ == "__main__":
-
-    stp_words = file_utils.read_line(basedir + '/stp_words.txt')
 
     if os.path.exists(root_name):
         root = load_model(root_name)
@@ -88,7 +101,7 @@ if __name__ == "__main__":
 
     file_pairs = [(os.path.join(abs_dir, fname), os.path.join(new_words_dir, fname)) for fname in
                   os.listdir(abs_dir)]
-    find_func = functools.partial(find_new_words, root, list(stp_words))
+    find_func = functools.partial(find_new_words, root)
     pool = Pool(int(cpu_count() / 2))
     pool.map(find_func, file_pairs)
     pool.close()
