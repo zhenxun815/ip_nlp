@@ -18,10 +18,11 @@ from common import path_config
 
 logger = logger_factory.get_logger('segment')
 
-jieba.load_userdict(path_config.cnki_dict)
+# jieba.load_userdict(path_config.cnki_dict)
 # match decimal or single character
 digit_pattern = re.compile(r'^[0-9]+(\.[0-9]+)?[a-zA-Z%‰]?|^[a-zA-Z]$')
 dna_pattern = re.compile(r'[ACTGU]{8,}')
+chinese_pattern = re.compile(r'[\u4E00-\u9FFF]+')
 chemistry_pattern1 = re.compile(r'(?P<chemistry>[a-zA-Z]+)(?P<digit>[0-9]+)?\.[0-9]+[%‰]?')
 chemistry_pattern2 = re.compile(r'(?P<chemistry>[a-zA-Z]+)(?P<digit>[0-9]+[%‰])')
 
@@ -43,6 +44,10 @@ def is_digit(words: str):
     matcher1 = digit_pattern.match(words)
     matcher2 = dna_pattern.match(words.upper())
     return matcher1 or matcher2
+
+
+def is_chinese(words: str):
+    return chinese_pattern.match(words) and words not in stop_words
 
 
 def is_chemistry(words: str):
@@ -78,10 +83,10 @@ def clear_str(string: str):
     return string
 
 
-def seg_text(text: str):
+def seg_text(text: str, to_str=True):
     raw_words = jieba.cut(clear_str(text), cut_all=False)
-    tokens = [is_chemistry(token).lower() for token in raw_words if token not in stop_words and not is_digit(token)]
-    return ' '.join(tokens)
+    tokens = [token for token in raw_words if is_chinese(token)]
+    return ' '.join(tokens) if to_str else tokens
 
 
 def test_jieba():
@@ -94,7 +99,7 @@ def test_jieba():
 
 
 if __name__ == '__main__':
-    text = '吴式太极拳,最小二乘拟合,acgacgaCGCAAaaaaa,食指操作追踪球和拇指操作追踪球,本发明H2O涉及S2园林－机电Al1.0%技术领域\t实用新型 公开，具体A云计算的1000ppm说是一种盆\n栽土壤0.25%养护      ' \
+    text = '吴式太极拳,最小二乘拟合,acgacgaCGCAAaaaaa,稀土元素地球化学食指操作追踪球和拇指操作追踪球,本发明H2O涉及S2园林－机电Al1.0%技术领域\t实用新型 公开，具体A云计算的1000ppm说是一种盆\n栽土壤0.25%养护      ' \
            '作业平台，包括200B1机架、平连接，水管(53)另一端通过水泵H2,89%与水箱(51)相连接；所述)的气管隐马尔可夫模型0.01相连接。'
     seg_list_accuracy = jieba.cut(text, cut_all=False)
     print(' '.join(seg_list_accuracy))
