@@ -227,18 +227,20 @@ def concat_all(clf_dir, dest_dir, portion):
             print(f'write clf {clf_name}')
             for index, list2write in enumerate(splits):
                 dest_file = os.path.join(dest_dir, file_names[index])
-                file_utils.save_list2file(list2write, dest_file, lambda text: f'{clf_name}\t{text}')
+                file_utils.save_list2file(list2write, dest_file,
+                                          work_func=lambda text: f'{clf_name}\t{text}',
+                                          filter_func=lambda item: len(item) > 1)
         else:
             print(f'not split')
     file_utils.save_list2file(clf_names, clf_name_file)
 
 
-def create_copus(seged_clf_dir, copus_file):
+def create_corpus(seged_clf_dir, copus_file):
     for seged_clf_file in os.listdir(seged_clf_dir):
         print(f'add clf {seged_clf_file}')
         file2read = os.path.join(seged_clf_dir, seged_clf_file)
         texts = file_utils.read_line(file2read, lambda line: json.loads(line)['abs'])
-        file_utils.save_list2file(texts, copus_file, filter_func=lambda text: text and len(text) > 0, new_line=False)
+        file_utils.save_list2file(texts, copus_file, filter_func=lambda text: text and len(text) > 0)
     print(f'create copus complete')
 
 
@@ -256,12 +258,9 @@ def get_clf_info(dir):
     return clf_dict, total_count
 
 
-if __name__ == '__main__':
-    # save_group_file('E:/ip_data/train/rnn')
-    # concat_all('E:/ip_data/clfs/new_seged/limit10000', 'E:/ip_data/clfs/', (5, 2, 3))
-    # create_copus('E:/ip_data/clfs/new_seged/no_limit','E:/ip_data/clfs/new_seged/no_limit_t/copus.txt')
-    seged_dir = 'E:/ip_data/clfs/new_seged/no_limit'
-    select_dir = 'E:/ip_data/clfs/new_seged/no_limit_t'
+def select_sample(seged_dir, select_dir):
+    # seged_dir = 'E:/ip_data/clfs/new_seged/no_limit'
+    # select_dir = 'E:/ip_data/clfs/new_seged/no_limit_t'
     clf_dict, total_count = get_clf_info(seged_dir)
     for clf_file in os.listdir(seged_dir):
         clf_name = clf_file[0:4]
@@ -274,3 +273,9 @@ if __name__ == '__main__':
             print(f'clf {clf_name}, clf count {clf_count}, write count {read_count}')
             save_file = f'{clf_name}_{read_count}.txt'
             file_utils.save_list2file(lines[0:read_count], os.path.join(select_dir, save_file))
+
+
+if __name__ == '__main__':
+    # save_group_file('E:/ip_data/train/rnn')
+    concat_all('E:/ip_data/clfs/new_seged/no_limit_s', 'E:/ip_data/train/no_limit_sample', (5, 2, 3))
+    # create_corpus('E:/ip_data/clfs/new_seged/no_limit_t', 'E:/ip_data/clfs/new_seged/no_limit_t/corpus_sample.txt')
