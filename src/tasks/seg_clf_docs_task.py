@@ -26,18 +26,35 @@ def seg_clf_file(clf_file_pair):
     file_utils.save_list2file(seged_lines, seged_clf_file, lambda doc_json: json.dumps(doc_json, ensure_ascii=False))
 
 
+def extract_abs(clf_file_pair):
+    raw_clf_file, seged_clf_file = clf_file_pair
+    print(f'extract abs file {raw_clf_file} to {seged_clf_file}')
+    abs_lines = file_utils.read_line(raw_clf_file, lambda line: segment.seg_text((json.loads(line))['abs']))
+    file_utils.save_list2file(abs_lines, seged_clf_file)
+
+
 def seg_docs_under_dir(raw_files_dir, seged_files_dir):
     file_pairs = [(path.join(raw_files_dir, filename), path.join(seged_files_dir, filename)) for filename in
                   os.listdir(raw_files_dir)]
     print(f'file pairs {file_pairs}')
-    pool = Pool(2)
+    pool = Pool(int(NUMBER_OF_PROCESSES / 2))
     pool.map(seg_clf_file, file_pairs)
     pool.close()
     pool.join()
 
 
+def extract_abs_under_dir(raw_files_dir, abs_files_dir):
+    file_pairs = [(path.join(raw_files_dir, filename), path.join(abs_files_dir, filename)) for filename in
+                  os.listdir(raw_files_dir)]
+    print(f'file pairs {file_pairs}')
+    pool = Pool(int(NUMBER_OF_PROCESSES / 2))
+    pool.map(extract_abs, file_pairs)
+    pool.close()
+    pool.join()
+
+
 if __name__ == '__main__':
-    raw_dir = 'E:/ip_data/clfs/raw/2500'
-    seged_dir = 'E:/ip_data/clfs/new_seged/2500'
+    raw_dir = 'E:/ip_data/clfs/raw/no_limit'
+    seged_dir = 'E:/ip_data/clfs/new_seged/abs_cn'
     print(f'core num {NUMBER_OF_PROCESSES}')
-    seg_docs_under_dir(raw_dir, seged_dir)
+    extract_abs_under_dir(raw_dir, seged_dir)
