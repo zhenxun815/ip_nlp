@@ -10,14 +10,14 @@ import functools
 # @Time: 9/25/2019 11:28
 import os
 import re
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 
 from segmenter.dict_utils import load_dictionary, generate_ngram, save_model, load_model
 from segmenter.trie_model import TrieNode
 from utils import file_utils
 
 chinese_pattern = re.compile(r'[\u4E00-\u9FFF]+')
-
+"""
 basedir = 'E:/dict'
 abs_dir = 'E:/dict/abs'
 new_words_dir = 'E:/dict/nwd'
@@ -25,7 +25,7 @@ new_words_dir = 'E:/dict/nwd'
 basedir = '/home/tqhy/ip_nlp/resources/custom_dict'
 abs_dir = '/home/tqhy/ip_nlp/resources/clfs/abs/seged'
 new_words_dir = '/home/tqhy/ip_nlp/resources/custom_dict/new_words'
-"""
+
 root_name = basedir + "/root.pkl"
 
 
@@ -41,18 +41,20 @@ def load_data(filename):
     :return: 二维数组,[[句子1分词list], [句子2分词list],...,[句子n分词list]]
     """
     data = []
+    count = 0
     with open(filename, 'r') as f:
         for line in f:
+            if count == 800:
+                break
             word_list = line.split()[0:200]
             data.append(word_list)
+            count += 1
     return data
 
 
 def load_data_2_root(data, model):
     print('------> 插入节点')
     for word_list in data:
-        # tmp 表示每一行自由组合后的结果（n gram）
-        # tmp: [['它'], ['是'], ['小'], ['狗'], ['它', '是'], ['是', '小'], ['小', '狗'], ['它', '是', '小'], ['是', '小', '狗']]
         # print(f'start gen ngram: {word_list}')
         ngrams = generate_ngram(word_list, 3)
         for d in ngrams:
@@ -62,6 +64,9 @@ def load_data_2_root(data, model):
 
 def find_new_words(root, file_pair):
     abs_file, new_words_file = file_pair[0], file_pair[1]
+    if os.path.exists(new_words_file):
+        print(f'clf {new_words_file} has already found new words ...')
+        return
     print(f'start find new word in {abs_file}')
     datas = load_data(abs_file)
     model = root
@@ -102,7 +107,7 @@ if __name__ == "__main__":
     file_pairs = [(os.path.join(abs_dir, fname), os.path.join(new_words_dir, fname)) for fname in
                   os.listdir(abs_dir)]
     find_func = functools.partial(find_new_words, root)
-    pool = Pool(int(cpu_count() / 2))
+    pool = Pool(40)
     pool.map(find_func, file_pairs)
     pool.close()
     pool.join()
