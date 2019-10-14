@@ -219,9 +219,12 @@ def concat_all(clf_dir, dest_dir, portion):
     clf_names = []
     for clf_file in os.listdir(clf_dir):
         clf_name = clf_file[0:4]
+        clf_count = int(clf_file[5:-4])
         clf_file_path = os.path.join(clf_dir, clf_file)
-        texts = file_utils.read_line(clf_file_path, lambda line: json.loads(line)['abs'])
-        splits = split_list(list(texts), portion)
+        texts = list(file_utils.read_line(clf_file_path, lambda line: json.loads(line)['abs']))
+        count2read = int(clf_count * 0.3)
+
+        splits = split_list(list(texts[0:count2read]), portion)
         if splits:
             clf_names.append(clf_name)
             print(f'write clf {clf_name}')
@@ -277,5 +280,6 @@ def select_sample(seged_dir, select_dir):
 
 if __name__ == '__main__':
     # save_group_file('E:/ip_data/train/rnn')
-    concat_all('E:/ip_data/clfs/new_seged/no_limit_s', 'E:/ip_data/train/no_limit_sample', (5, 2, 3))
+    # concat_all('E:/ip_data/clfs/new_seged/no_limit_s', 'E:/ip_data/train/no_limit_sample', (5, 2, 3))
     # create_corpus('E:/ip_data/clfs/new_seged/no_limit_t', 'E:/ip_data/clfs/new_seged/no_limit_t/corpus_sample.txt')
+    print(f'{"A01B"[0:1]}')
