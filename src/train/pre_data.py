@@ -204,7 +204,7 @@ def split_list(data_list: list, portion: tuple, shuffle=True):
         print(f'not meet min size to split')
         return
     else:
-        random.shuffle(data_list)
+
         split_index1 = int(length * train_portion / portion_total)
         split_index2 = int(length * val_portion / portion_total) + split_index1
         train_list = data_list[0:split_index1]
@@ -214,28 +214,33 @@ def split_list(data_list: list, portion: tuple, shuffle=True):
 
 
 def concat_all(clf_dir, dest_dir, portion):
-    file_names = ['train.txt', 'val.txt', 'test.txt']
+    file_names = ['train', 'val', 'test']
     clf_name_file = os.path.join(dest_dir, 'clf_name.txt')
-    clf_names = []
+    clf_names = set()
     for clf_file in os.listdir(clf_dir):
         clf_name = clf_file[0:4]
         clf_count = int(clf_file[5:-4])
         clf_file_path = os.path.join(clf_dir, clf_file)
         texts = list(file_utils.read_line(clf_file_path, lambda line: json.loads(line)['abs']))
-        count2read = int(clf_count * 0.3)
+        random.shuffle(texts)
+        count2read = int(clf_count * 0.05)
 
-        splits = split_list(list(texts[0:count2read]), portion)
-        if splits:
-            clf_names.append(clf_name)
-            print(f'write clf {clf_name}')
-            for index, list2write in enumerate(splits):
-                dest_file = os.path.join(dest_dir, file_names[index])
-                file_utils.save_list2file(list2write, dest_file,
-                                          work_func=lambda text: f'{clf_name}\t{text}',
-                                          filter_func=lambda item: len(item) > 1)
-        else:
-            print(f'not split')
-    file_utils.save_list2file(clf_names, clf_name_file)
+        for i in range(20):
+            start = count2read * i
+            end = count2read * (i + 1) if len(texts) - 1 > count2read * (i + 1) else len(texts) - 1
+            splits = split_list(texts[start:end], portion)
+            if splits:
+                clf_names.add(clf_name)
+                print(f'write clf {clf_name}')
+                for index, list2write in enumerate(splits):
+                    dest_file = os.path.join(dest_dir, f'{file_names[index]}{i}.txt')
+                    file_utils.save_list2file(list2write, dest_file,
+                                              work_func=lambda text: f'{clf_name}\t{text}',
+                                              filter_func=lambda item: len(item) > 1)
+            else:
+                print(f'not split')
+
+    file_utils.save_list2file(list(clf_names), clf_name_file)
 
 
 def create_corpus(seged_clf_dir, copus_file):
@@ -280,6 +285,6 @@ def select_sample(seged_dir, select_dir):
 
 if __name__ == '__main__':
     # save_group_file('E:/ip_data/train/rnn')
-    # concat_all('E:/ip_data/clfs/new_seged/no_limit_s', 'E:/ip_data/train/no_limit_sample', (5, 2, 3))
+    concat_all('/home/tqhy/ip_nlp/resources/clfs/new_seged/cn_words', '/home/tqhy/ip_nlp/resources/train/no_limit_s3',
+               (8, 1, 1))
     # create_corpus('E:/ip_data/clfs/new_seged/no_limit_t', 'E:/ip_data/clfs/new_seged/no_limit_t/corpus_sample.txt')
-    print(f'{"A01B"[0:1]}')
