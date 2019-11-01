@@ -14,7 +14,7 @@ from utils.file_utils import make_dirs
 base_dir = 'E:/ip_data'
 # base_dir = '../../resources'
 dict_dir = make_dirs(base_dir, 'custom_dict')
-cnki_dict = os.path.join(dict_dir, 'cnki_trans_union.txt')
+cnki_dict = os.path.join(dict_dir, 'cnki_trans_union1.txt')
 stp_words = os.path.join(dict_dir, 'stp_all.stp')
 
 train_dir = make_dirs(base_dir, 'train/rnn')
@@ -23,6 +23,7 @@ train_txt = os.path.join(train_dir, 'train.txt')
 test_txt = os.path.join(train_dir, 'test.txt')
 val_txt = os.path.join(train_dir, 'val.txt')
 vocab_txt = os.path.join(train_dir, 'vocab.txt')
+clf_name_txt = os.path.join(train_dir, 'clf_name.txt')
 
 save_dir = make_dirs(train_dir, 'checkpoints/textcnn')
 save_path = os.path.join(save_dir, 'best_validation')  # 最佳验证结果保存路径
