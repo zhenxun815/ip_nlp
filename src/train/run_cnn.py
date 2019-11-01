@@ -12,6 +12,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn import metrics
 
+from answer.process_answer import ans_score
 from common import logger_factory
 from common import path_config
 from train.cnn_model import TCNNConfig, TextCNN
@@ -22,6 +23,7 @@ train_txt = path_config.train_txt
 test_txt = path_config.test_txt
 val_txt = path_config.val_txt
 vocab_txt = path_config.vocab_txt
+clf_name_txt = path_config.clf_name_txt
 
 save_path = path_config.save_path  # 最佳验证结果保存路径
 
@@ -258,12 +260,13 @@ if __name__ == '__main__':
     print_config_params(config)
     if not os.path.exists(vocab_txt):  # 如果不存在词汇表，重建
         build_vocab(train_txt, vocab_txt, config.vocab_size)
-    categories, cat_to_id = read_category(seged_clf_path)
+    categories, cat_to_id = read_category(clf_name_txt)
     words, word_to_id = read_vocab(vocab_txt)
     config.vocab_size = len(words)
     model = TextCNN(config)
     # test()
-    answer('/home/tqhy/ip_nlp/resources/questions/光电.txt', '/home/tqhy/ip_nlp/resources/answers/光电.txt')
+    answer('/home/tqhy/ip_nlp/resources/questions', '/home/tqhy/ip_nlp/resources/answers')
+    ans_score()
     # answer('E:/ip_data/train/limit2500/test.txt')
     """if sys.argv[1] == 'train':
         train()
