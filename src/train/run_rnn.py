@@ -8,27 +8,15 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os
-import time
-from datetime import datetime
-from datetime import timedelta
-
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import seaborn as sns
-import tensorflow as tf
-from matplotlib.font_manager import FontProperties
-from sklearn import metrics
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from tensorflow.python.keras.callbacks import EarlyStopping
-from tensorflow.python.keras.layers import LSTM, Activation, Dense, Dropout, Input, Embedding
+from tensorflow.python.keras.layers import LSTM, Dense, Dropout, Input, Embedding
 from tensorflow.python.keras.models import Model
 from tensorflow.python.keras.optimizers import RMSprop
 from tensorflow.python.keras.preprocessing import sequence
 from tensorflow.python.keras.preprocessing.text import Tokenizer
 
-from common import logger_factory
 from common import path_config
 
 ## fonts = FontProperties(fname = "/Library/Fonts/华文细黑.ttf",size=14)
@@ -48,7 +36,6 @@ vocab_txt = path_config.vocab_txt
 
 save_path = path_config.save_path
 
-seged_clf_path = path_config.seged_clf_path
 tensorboard_dir = path_config.tensorboard_dir
 
 # In[4]:

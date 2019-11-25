@@ -18,7 +18,7 @@ from common import path_config
 
 logger = logger_factory.get_logger('segment')
 
-# jieba.load_userdict(path_config.cnki_dict)
+jieba.load_userdict(path_config.cnki_dict)
 # match decimal or single character
 digit_pattern = re.compile(r'^[0-9]+(\.[0-9]+)?[a-zA-Z%‰]?|^[a-zA-Z]$')
 dna_pattern = re.compile(r'[ACTGU]{8,}')

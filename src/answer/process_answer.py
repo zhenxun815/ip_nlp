@@ -21,7 +21,7 @@ def ans_score(my_ans_dir, right_ans_dir):
         my_ans_file = os.path.join(my_ans_dir, ans_file_name)
         right_ans_file = os.path.join(right_ans_dir, ans_file_name)
         my_ans_dict = dict(file_utils.read_line(my_ans_file, lambda split: (split[0], split[1]), split=':'))
-        right_ans_dict = dict(file_utils.read_line(right_ans_file, lambda split: (split[0], split[1]), split=','))
+        right_ans_dict = dict(file_utils.read_line(right_ans_file, lambda split: (split[0], split[1]), split=':'))
         for _q, my_ans in my_ans_dict.items():
             right_ans = right_ans_dict[_q]
             print(f'{_q}, my:{my_ans}, right:{right_ans}')
@@ -89,10 +89,10 @@ def process_raw_answers(raw_answers_dir, processed_answer_dir):
 
 
 if __name__ == '__main__':
-    my_anss = 'C:/Users/qing/Desktop/自动分类号单1-20190903/my_answers'
-    right_anss = 'C:/Users/qing/Desktop/自动分类号单1-20190903/right_answers'
+    my_anss = 'E:/ip_data/自动分类号单1-20190903/20190903/my_answers'
+    right_anss = 'E:/ip_data/自动分类号单1-20190903/20190903/right_answers'
     raw_answers_dir = 'C:/Users/qing/Desktop/自动分类号单1-20190903/20190903/pic'
     clf_file = 'F:/ip_data/ip_search/classification/clf_count.txt'
     # process_raw_answers(raw_answers_dir, right_anss)
-    right_ans_distribution(right_anss, clf_file)
-    # ans_score(my_anss, right_anss)
+    # right_ans_distribution(right_anss, clf_file)
+    ans_score(my_anss, right_anss)

@@ -43,7 +43,7 @@ def store_seged_txts(seged_txt, result):
 
 if __name__ == '__main__':
 
-    raw_questions_dir = 'E:/ip_data/自动分类号单1-20190903/json'
-    seged_question_dir = 'E:/ip_data/自动分类号单1-20190903/seged2'
+    raw_questions_dir = 'E:/ip_data/自动分类号单1-20190903/201904/json'
+    seged_question_dir = 'E:/ip_data/自动分类号单1-20190903/201904/seged'
 
-    # seg_raw_txts(raw_questions_dir, seged_question_dir)
+    seg_raw_txts(raw_questions_dir, seged_question_dir)
