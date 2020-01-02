@@ -101,6 +101,15 @@ def remove_redundant(origin_file, dest_file, keep_order=True):
         save_list2file(list(set(lines)), dest_file)
 
 
+def join_file(new_file_path, old_file_path):
+    for file2join in old_file_path:
+        print(f'{file2join}')
+        lines2write = read_line(file2join)
+        save_list2file(lines2write, new_file_path)
+
+
 if __name__ == '__main__':
 
-    remove_redundant('E:/cnki_trans_clean4.txt', 'E:/cnki_trans_clean5.txt')
+    new_file = 'E:/ip_data/classification/201909/my_answers/my_answer09.txt'
+    files = get_files('E:/ip_data/classification/201909/my_answers/')
+    join_file(new_file, files)
