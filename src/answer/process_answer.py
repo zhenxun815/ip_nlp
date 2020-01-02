@@ -11,12 +11,13 @@ import json
 import os
 from functools import reduce
 
+from answer.ClfInfo import ClfInfo
 from utils import file_utils
 
 
 def ans_score(my_ans_dir, right_ans_dir):
     que_count = 0
-    right_anser_count = 0
+    right_answer_count = 0
     for ans_file_name in os.listdir(my_ans_dir):
         my_ans_file = os.path.join(my_ans_dir, ans_file_name)
         right_ans_file = os.path.join(right_ans_dir, ans_file_name)
@@ -27,9 +28,9 @@ def ans_score(my_ans_dir, right_ans_dir):
             print(f'{_q}, my:{my_ans}, right:{right_ans}')
             que_count += 1
             if my_ans == right_ans:
-                right_anser_count += 1
+                right_answer_count += 1
 
-    total_score = right_anser_count / que_count
+    total_score = right_answer_count / que_count
     print(f'total score is {total_score}')
 
 
@@ -88,11 +89,76 @@ def process_raw_answers(raw_answers_dir, processed_answer_dir):
         file_utils.save_list2file(processed_answers, store_answer_file)
 
 
+def get_clf_info_dict(clf_count_info_file: str) -> list([dict]):
+    """
+
+    :type clf_count_info_file: str
+    """
+    info_list = file_utils.read_line(clf_count_info_file,
+                                     lambda info: (info[0], ClfInfo(info[0], info[1])),
+                                     ':')
+    return dict(info_list)
+
+
+def get_clf_que_info(ques_clf):
+    ques_clf_count_dict = {}
+    for clf in ques_clf:
+        # print(f'clf is {clf}')
+        if clf in ques_clf_count_dict.keys():
+            count = ques_clf_count_dict.get(clf)
+            # print(f'count is :{count}')
+            ques_clf_count_dict.update({clf: count + 1})
+        else:
+            # print(f'add new clf')
+            ques_clf_count_dict.update({clf: 1})
+    # list_utils.print_dict(ques_clf_count_dict)
+
+    return ques_clf_count_dict
+
+
 if __name__ == '__main__':
-    my_anss = 'E:/ip_data/自动分类号单1-20190903/20190903/my_answers'
-    right_anss = 'E:/ip_data/自动分类号单1-20190903/20190903/right_answers'
-    raw_answers_dir = 'C:/Users/qing/Desktop/自动分类号单1-20190903/20190903/pic'
+    my_anss = 'E:/ip_data/classification/my_answers'
+    right_anss = 'E:/ip_data/classification/right_answers'
+    raw_answers_dir = 'E:/ip_data/classification/201904/pic'
     clf_file = 'F:/ip_data/ip_search/classification/clf_count.txt'
     # process_raw_answers(raw_answers_dir, right_anss)
     # right_ans_distribution(right_anss, clf_file)
-    ans_score(my_anss, right_anss)
+    # ans_score(my_anss, right_anss)
+
+    clf_infos = get_clf_info_dict(clf_file)
+    # list_utils.print_dict(clf_infos, lambda clf_info: f'{clf_info.clf_count}')
+
+    my_ans_dict = get_all_ans_dict(my_anss)
+    right_ans_dict = get_all_ans_dict(right_anss)
+    # for k,v in right_ans_dict:
+    clf_que_info = get_clf_que_info(right_ans_dict.values())
+
+    for clf_name, que_count in clf_que_info.items():
+        clf_info = clf_infos.get(clf_name)
+        clf_info.que_count = que_count
+        clf_infos.update({clf_name: clf_info})
+        info = clf_infos.get(clf_name)
+        print(f'{info.clf_name},{info.clf_count},{info.que_count}')
+
+    for que, right_ans in right_ans_dict.items():
+        my_ans = my_ans_dict.get(que)
+        clf_info = clf_infos.get(right_ans)
+        if my_ans == right_ans:
+            clf_info.right_que_count = clf_info.right_que_count + 1
+            clf_infos.update({right_ans: clf_info})
+            print(f'que{que}, right ans {right_ans},my ans {my_ans}')
+            info = clf_infos.get(right_ans)
+            print(f'{info.clf_name},{info.clf_count},{info.que_count},{info.right_que_count}')
+
+    clf_need = set()
+    for clf, clf_info in clf_infos.items():
+
+        if clf_info.que_count > 0:
+            score = clf_info.right_que_count / clf_info.que_count
+            print(f'{clf_info.clf_name},score is {score}')
+            if score < 0.5:
+                clf_need.add(clf_info)
+        # elif int(clf_info.clf_count) < 10000:
+        # clf_need.add(clf_info)
+    for info in clf_need:
+        print(f'{info.clf_name}')
